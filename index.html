@@ -5,45 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat DDT</title>
 
-    <style>
-        body{
-            font-family: Arial, sans-serif;
-            background:#eef2ff;
-            margin:0;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
-        }
-
-        .card{
-            background:white;
-            padding:30px;
-            border-radius:15px;
-            box-shadow:0 0 15px rgba(0,0,0,.1);
-            text-align:center;
-        }
-
-        button{
-            padding:12px 20px;
-            border:none;
-            border-radius:10px;
-            background:#2563eb;
-            color:white;
-            cursor:pointer;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="card">
-    <h1>CHAT DDT</h1>
-    <p>Login menggunakan Gmail</p>
+    <div id="loginPage">
 
-    <button>
-        Login Google
-    </button>
-</div>
+        <h1>CHAT DDT</h1>
+
+        <button id="loginBtn">
+            Login Google
+        </button>
+
+    </div>
+
+    <div id="chatPage" style="display:none;">
+
+        <div class="sidebar">
+            <h3>Grup</h3>
+
+            <ul>
+                <li>BUKTI QRIS</li>
+                <li>TURNOVER DDT</li>
+                <li>BUKTI DEPOSIT</li>
+            </ul>
+        </div>
+
+        <div class="chat">
+
+            <div class="header">
+                Room Chat
+            </div>
+
+            <div id="messages"></div>
+
+            <div class="input-box">
+
+                <input
+                    type="text"
+                    id="messageInput"
+                    placeholder="Tulis pesan..."
+                >
+
+                <button id="sendBtn">
+                    Kirim
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+<script type="module" src="firebase.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
