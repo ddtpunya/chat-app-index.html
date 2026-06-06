@@ -9,11 +9,11 @@ from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
 
-    apiKey: "ISI_API_KEY",
+    apiKey: "AIzaSyB4VyaB_iWqnQvAdkk3rp_duVSIWTLROL8",
 
-    authDomain: "ISI_AUTH_DOMAIN",
+    authDomain: "chat-app-cc947.firebaseapp.com",
 
-    projectId: "ISI_PROJECT_ID"
+    projectId: "chat-app-cc947"
 
 };
 
