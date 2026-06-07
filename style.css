@@ -729,30 +729,81 @@ font-size:18px;
 
 
 
-@media(max-width:768px){
+@media (max-width: 768px) {
+    #chatPage {
+        flex-direction: column; /* Ubah baris jadi tumpukan atas-bawah jika diperlukan */
+        height: 100vh;
+    }
 
+    /* Di awal masuk, buat sidebar memenuhi layar penuh */
+    .sidebar {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+    }
 
+    /* Jangan sembunyikan nama user dan status di HP, biarkan tetap terlihat jelas */
+    .group-name, 
+    .group-desc, 
+    .profile-name, 
+    .online-status {
+        display: block !important; 
+    }
 
-.sidebar{
+    /* Sembunyikan area chat utama di awal sebelum user memilih room */
+    .chat {
+        display: none;
+        width: 100%;
+        height: 100vh;
+    }
 
-width:100px;
+    /* Sesuaikan ukuran teks header agar tidak meluap di HP */
+    .group-title {
+        font-size: 18px;
+    }
+    
+    .chat-header {
+        height: 65px;
+        padding: 0 12px;
+    }
 
-}
+    /* Optimasi gelembung chat agar lebih hemat ruang di layar HP yang sempit */
+    #messages {
+        padding: 15px;
+    }
 
+    .bubble {
+        max-width: 80% !important; /* Beri ruang chat lebih lebar di HP */
+        font-size: 14px;
+        padding: 10px 12px;
+    }
 
+    /* Sembunyikan beberapa tombol aksesoris input yang kurang penting di layar kecil */
+    .input-box {
+        height: 65px;
+        padding: 8px 10px;
+        gap: 6px;
+    }
 
-.group-name,
+    .input-box .bottom-btn:nth-child(3), /* Tombol gambar */
+    .input-box .bottom-btn:nth-child(4)  /* Tombol klip kertas/attach file */ {
+        display: none; 
+    }
 
-.group-desc,
+    #messageInput {
+        height: 42px;
+        font-size: 14px;
+        border-radius: 20px;
+    }
 
-.profile-name,
-
-.online-status{
-
-display:none;
-
-}
-
-
-
+    .send-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%; /* Ubah tombol kirim menjadi bulat ala WhatsApp */
+    }
+    
+    .bottom-btn {
+        width: 38px;
+        height: 38px;
+    }
 }
