@@ -96,13 +96,9 @@ body {
 /* ===================== */
 #messages {
     flex: 1;
-    padding: 20px;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-
-    height: 0;       /* 🔥 WAJIB FIX SCROLL */
-    min-height: 0;   /* 🔥 WAJIB FIX FLEX BUG */
+    height: 0;
+    min-height: 0;
 }
 
 /* ===================== */
