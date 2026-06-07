@@ -1,55 +1,218 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat DDT</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+<title>CHAT DDT</title>
+
+<link rel="stylesheet" href="style.css">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+
 </head>
 <body>
 
-    <!-- LOGIN PAGE -->
-    <div id="loginPage">
+<!-- LOGIN -->
+
+<div id="loginPage">
+
+    <div class="login-card">
+
         <h1>CHAT DDT</h1>
-        <button id="loginBtn">Login Google</button>
-    </div>
 
-    <!-- CHAT PAGE -->
-    <div id="chatPage" style="display:none;">
+        <button id="loginBtn">
 
-        <!-- SIDEBAR USER LIST -->
-        <div class="sidebar">
-            <h3>Private Chat</h3>
-            <ul id="userList"></ul>
-        </div>
+            Login Google
 
-        <!-- CHAT AREA -->
-        <div class="chat">
-
-            <div class="header">
-                Room Chat
-            </div>
-
-            <div id="messages"></div>
-
-            <div class="input-box">
-
-                <input
-                    type="text"
-                    id="messageInput"
-                    placeholder="Tulis pesan..."
-                >
-
-                <button id="sendBtn">
-                    Kirim
-                </button>
-
-            </div>
-
-        </div>
+        </button>
 
     </div>
+
+</div>
+
+<!-- CHAT -->
+
+<div id="chatPage" style="display:none;">
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+<div class="profile">
+
+<div class="profile-left">
+
+<img id="myPhoto"
+src="https://i.pravatar.cc/100">
+
+<div>
+
+<div id="myName">
+
+Loading...
+
+</div>
+
+<div class="online">
+
+<span></span>
+
+Online
+
+</div>
+
+</div>
+
+</div>
+
+<div class="profile-right">
+
+<button>
+
+<i class="fa fa-gear"></i>
+
+</button>
+
+<button>
+
+<i class="fa fa-arrow-right-from-bracket"></i>
+
+</button>
+
+</div>
+
+</div>
+
+<div class="search-box">
+
+<i class="fa fa-search"></i>
+
+<input
+type="text"
+placeholder="Cari user atau grup..."
+>
+
+</div>
+
+<button class="group-btn">
+
+<i class="fa-regular fa-message"></i>
+
+Groups
+
+</button>
+
+<button class="new-group">
+
++
+
+Buat Grup Baru
+
+</button>
+
+<ul id="userList">
+
+</ul>
+
+</div>
+
+<!-- CHAT -->
+
+<div class="chat">
+
+<div class="top-warning">
+
+Aktifkan notifikasi browser agar pesan masuk selalu realtime!
+
+</div>
+
+<div class="chat-header">
+
+<div class="chat-info">
+
+<img
+src="https://i.pravatar.cc/100"
+id="roomPhoto"
+>
+
+<div>
+
+<div class="room-name">
+
+Room Chat
+
+</div>
+
+<div class="room-member">
+
+Realtime Firebase
+
+</div>
+
+</div>
+
+</div>
+
+<div class="chat-tools">
+
+<button>
+
+<i class="fa fa-search"></i>
+
+</button>
+
+<button>
+
+<i class="fa fa-gear"></i>
+
+</button>
+
+</div>
+
+</div>
+
+<div id="messages">
+
+</div>
+
+<div class="input-box">
+
+<button class="emoji">
+
+😊
+
+</button>
+
+<input
+id="messageInput"
+type="text"
+placeholder="Ketik pesan..."
+>
+
+<button>
+
+📎
+
+</button>
+
+<button>
+
+🖼
+
+</button>
+
+<button id="sendBtn">
+
+✈
+
+</button>
+
+</div>
+
+</div>
+
+</div>
 
 <script type="module" src="firebase.js"></script>
 <script type="module" src="auth.js"></script>
