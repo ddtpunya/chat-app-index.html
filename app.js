@@ -146,3 +146,56 @@ auth.onAuthStateChanged((user) => {
         window.openChat("global");
     }
 });
+// ==========================================
+// KONTROL RESPONSIVE MOBILE (NAVIGASI SCREEN)
+// ==========================================
+const sidebar = document.querySelector(".sidebar");
+const chatArea = document.querySelector(".chat");
+const backBtn = document.getElementById("backToSidebarBtn");
+
+// Deteksi apakah resolusi layar saat ini adalah mobile (lebar <= 768px)
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+// Modifikasi fungsi openChat yang sudah ada agar mendukung perpindahan halaman di HP
+const originalOpenChat = window.openChat;
+window.openChat = function (otherUser) {
+    // Jalankan fungsi open chat asli bawaan firebase kita sebelumnya
+    originalOpenChat(otherUser);
+
+    // Jika di HP, sembunyikan sidebar dan tunjukkan area chat saat kontak diklik
+    if (isMobile() && sidebar && chatArea) {
+        sidebar.style.display = "none";
+        chatArea.style.display = "flex";
+        if (backBtn) backBtn.style.display = "block"; // Tampilkan tombol kembali
+    }
+};
+
+// Logika ketika tombol "Kembali" di klik di HP
+if (backBtn) {
+    backBtn.addEventListener("click", () => {
+        if (isMobile() && sidebar && chatArea) {
+            sidebar.style.display = "flex";
+            sidebar.style.width = "100%"; // Buat daftar kontak memenuhi layar
+            chatArea.style.display = "none";
+        }
+    });
+}
+
+// Pastikan layout kembali normal jika user sengaja me-resize window browser dari kecil ke besar
+window.addEventListener("resize", () => {
+    if (!isMobile()) {
+        if (sidebar) sidebar.style.display = "flex";
+        if (sidebar) sidebar.style.width = "360px";
+        if (chatArea) chatArea.style.display = "flex";
+        if (backBtn) backBtn.style.display = "none";
+    } else {
+        // Jika sedang di posisi mobile dan belum pilih chat, utamakan tunjukkan sidebar
+        if (sidebar && chatArea && chatArea.style.display !== "flex") {
+            sidebar.style.display = "flex";
+            sidebar.style.width = "100%";
+            chatArea.style.display = "none";
+        }
+    }
+});
