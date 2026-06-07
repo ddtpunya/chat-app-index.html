@@ -6,9 +6,7 @@ import {
   query,
   where,
   orderBy,
-  onSnapshot,
-  doc,
-  deleteDoc
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const sendBtn = document.getElementById("sendBtn");
@@ -70,24 +68,8 @@ sendBtn.addEventListener("click", async () => {
 });
 
 // =========================
-// HAPUS PESAN
+// LOAD MESSAGES (REALTIME & FILTERED)
 // =========================
-window.deleteMessage = async function (messageId) {
-    const konfirmasi = confirm("Apakah Anda yakin ingin menghapus pesan ini?");
-    if (!konfirmasi) return;
-
-    try {
-        await deleteDoc(doc(db, "messages", messageId));
-        console.log("Pesan berhasil dihapus:", messageId);
-    } catch (err) {
-        console.error("Gagal menghapus pesan:", err);
-        alert("Anda tidak memiliki izin untuk menghapus pesan ini.");
-    }
-};
-
-// ========================================================
-// LOAD MESSAGES (REALTIME & FILTERED - TAMPILAN MODEL FORUM)
-// ========================================================
 function listenToChat(chatId) {
     // Matikan listener sebelumnya jika ada agar tidak tumpang tindih
     if (unsubscribeChat) unsubscribeChat();
@@ -102,45 +84,28 @@ function listenToChat(chatId) {
     unsubscribeChat = onSnapshot(q, (snapshot) => {
         messages.innerHTML = "";
 
-        snapshot.forEach((snapshotDoc) => {
-            const data = snapshotDoc.data();
-            const messageId = snapshotDoc.id;
+        snapshot.forEach((doc) => {
+            const data = doc.data();
             const me = auth.currentUser;
             if (!me) return;
 
+            // Tentukan apakah ini pesan kita atau orang lain
             const isMe = data.uid === me.uid;
+
             const div = document.createElement("div");
+            div.className = "message";
             
-            // Menggunakan kelas tata letak model forum/Discord
-            div.className = "forum-message-row";
+            // Atur posisi: Jika pesan kita, taruh di kanan. Jika orang lain, di kiri.
+            div.style.justifyContent = isMe ? "flex-end" : "flex-start";
 
-            const photoURL = data.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}`;
-
-            // Mengambil format waktu jam:menit
-            let timeString = "";
-            if (data.createdAt && data.createdAt.toDate) {
-                const dateObj = data.createdAt.toDate();
-                timeString = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            } else {
-                timeString = "Baru saja";
-            }
-
+            // Gunakan struktur CSS class yang sudah Anda buat di style.css
             div.innerHTML = `
-                <div class="forum-avatar-area">
-                    <img src="${photoURL}" class="forum-avatar" alt="avatar">
+                ${!isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar">` : ''}
+                <div class="bubble" style="background: ${isMe ? '#d9fdd3' : 'white'}; border-radius: ${isMe ? '12px 12px 0 12px' : '12px 12px 12px 0'};">
+                    <div class="sender" style="color: ${isMe ? '#059669' : '#1d4ed8'}">${isMe ? 'Anda' : data.name}</div>
+                    <div>${data.text}</div>
                 </div>
-
-                <div class="forum-body-area">
-                    <div class="forum-header">
-                        <span class="forum-sender-name">${isMe ? 'Anda' : data.name}</span>
-                        <span class="forum-timestamp">${timeString}</span>
-                        
-                        ${isMe ? `<i class="fa-solid fa-trash forum-delete-btn" onclick="deleteMessage('${messageId}')" title="Hapus Pesan"></i>` : ''}
-                    </div>
-                    <div class="forum-text">
-                        ${data.text}
-                    </div>
-                </div>
+                ${isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar" style="margin-left: 10px;">` : ''}
             `;
 
             messages.appendChild(div);
@@ -162,6 +127,8 @@ window.openChat = function (otherUser) {
         document.getElementById("roomName").innerText = "Room Chat Global";
     } else {
         // Gabungkan UID Anda dan UID tujuan secara alfabetis/terurut
+        // Misal UID Anda 'abc' dan tujuan 'xyz', ID-nya jadi 'abc_xyz'
+        // Ini memastikan kedua user masuk ke kamar ID yang sama persis
         currentChatId = me.uid < otherUser.uid 
             ? me.uid + "_" + otherUser.uid 
             : otherUser.uid + "_" + me.uid;
@@ -171,13 +138,6 @@ window.openChat = function (otherUser) {
 
     console.log("Kamar Chat Aktif:", currentChatId);
     listenToChat(currentChatId); // Jalankan fungsi untuk mendengarkan pesan di kamar ini
-
-    // Sistem Navigasi Responsif Mobile (Sembunyikan sidebar, tampilkan obrolan)
-    if (isMobile() && sidebar && chatArea) {
-        sidebar.style.display = "none";
-        chatArea.style.display = "flex";
-        if (backBtn) backBtn.style.display = "block";
-    }
 };
 
 // Inisialisasi awal saat pertama kali dimuat
@@ -186,7 +146,6 @@ auth.onAuthStateChanged((user) => {
         window.openChat("global");
     }
 });
-
 // ==========================================
 // KONTROL RESPONSIVE MOBILE (NAVIGASI SCREEN)
 // ==========================================
@@ -198,6 +157,20 @@ const backBtn = document.getElementById("backToSidebarBtn");
 function isMobile() {
     return window.innerWidth <= 768;
 }
+
+// Modifikasi fungsi openChat yang sudah ada agar mendukung perpindahan halaman di HP
+const originalOpenChat = window.openChat;
+window.openChat = function (otherUser) {
+    // Jalankan fungsi open chat asli bawaan firebase kita sebelumnya
+    originalOpenChat(otherUser);
+
+    // Jika di HP, sembunyikan sidebar dan tunjukkan area chat saat kontak diklik
+    if (isMobile() && sidebar && chatArea) {
+        sidebar.style.display = "none";
+        chatArea.style.display = "flex";
+        if (backBtn) backBtn.style.display = "block"; // Tampilkan tombol kembali
+    }
+};
 
 // Logika ketika tombol "Kembali" di klik di HP
 if (backBtn) {
