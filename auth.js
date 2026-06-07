@@ -24,10 +24,15 @@ loginBtn.addEventListener("click", async ()=>{
     const provider =
     new GoogleAuthProvider();
 
-    await signInWithPopup(
-        auth,
-        provider
-    );
+    loginBtn.addEventListener("click", async () => {
+    try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+    } catch (error) {
+        console.log("Login error:", error);
+        alert(error.message);
+    }
+});
 
 });
 
