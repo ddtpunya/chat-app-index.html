@@ -15,27 +15,22 @@ const messages = document.getElementById("messages");
 
 
 // =====================
-// 1. KIRIM PESAN
+// KIRIM PESAN
 // =====================
 sendBtn.addEventListener("click", async () => {
 
-    console.log("KLIK KIRIM");
-
     const text = input.value.trim();
-    console.log("TEXT:", text);
-
     if (!text) return;
 
     const user = auth.currentUser;
-    console.log("USER:", user);
 
     if (!user) {
-        alert("User belum login");
+        alert("Belum login");
         return;
     }
 
     try {
-        const ref = await addDoc(collection(db, "messages"), {
+        await addDoc(collection(db, "messages"), {
             text,
             name: user.displayName || user.email.split("@")[0],
             email: user.email,
@@ -43,18 +38,16 @@ sendBtn.addEventListener("click", async () => {
             createdAt: serverTimestamp()
         });
 
-        console.log("SUKSES SIMPAN:", ref.id);
+        input.value = "";
 
     } catch (e) {
-        console.error("ERROR FIRESTORE:", e);
+        console.error("ERROR:", e);
     }
-
-    input.value = "";
 });
 
 
 // =====================
-// 2. REALTIME CHAT
+// REALTIME CHAT
 // =====================
 const q = query(
     collection(db, "messages"),
@@ -77,8 +70,7 @@ onSnapshot(q, (snapshot) => {
 
         div.innerHTML = `
             <b>${data.name || data.email}</b><br>
-            ${data.text}
-            <br>
+            ${data.text}<br>
             <small>${time}</small>
             <hr>
         `;
