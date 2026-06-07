@@ -23,6 +23,7 @@ document.getElementById("messages");
 // 1. KIRIM PESAN
 // =====================
 sendBtn.addEventListener("click", async () => {
+console.log("TOMBOL DITEKAN");
 
     const text = input.value.trim();
     if (!text) return;
