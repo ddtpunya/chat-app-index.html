@@ -69,3 +69,15 @@ body{
     margin-left:10px;
     padding:10px 20px;
 }
+
+#messages div {
+    padding:10px;
+    margin-bottom:10px;
+    background:#f5f5f5;
+    border-radius:8px;
+}
+
+small {
+    color:gray;
+    font-size:11px;
+}
