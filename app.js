@@ -136,19 +136,30 @@ onSnapshot(q, (snapshot) => {
       <div>${data.text}</div>
     `;
 
-    row.innerHTML = isMe
-      ? `
-        <div class="msg-right">
-          ${bubble.outerHTML}
-          <img src="${photo}" class="avatar">
-        </div>
-      `
-      : `
-        <div class="msg-left">
-          <img src="${photo}" class="avatar">
-          ${bubble.outerHTML}
-        </div>
-      `;
+    const wrapper = document.createElement("div");
+wrapper.className = isMe ? "msg-right" : "msg-left";
+
+const avatar = document.createElement("img");
+avatar.src = photo;
+avatar.className = "avatar";
+
+const bubble = document.createElement("div");
+bubble.className = "bubble";
+
+bubble.innerHTML = `
+  <div class="sender">${data.name}</div>
+  <div class="text">${data.text}</div>
+`;
+
+if (isMe) {
+  wrapper.appendChild(bubble);
+  wrapper.appendChild(avatar);
+} else {
+  wrapper.appendChild(avatar);
+  wrapper.appendChild(bubble);
+}
+
+row.appendChild(wrapper);
 
     messages.appendChild(row);
 
