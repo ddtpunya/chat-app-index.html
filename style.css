@@ -5,6 +5,9 @@ box-sizing:border-box;
 font-family:Segoe UI,sans-serif;
 }
 
+/* =========================
+   GLOBAL
+========================= */
 body{
 background:#0f172a;
 height:100vh;
@@ -50,7 +53,7 @@ cursor:pointer;
 }
 
 /* =========================
-   MAIN LAYOUT
+   MAIN CHAT LAYOUT
 ========================= */
 #chatPage{
 display:flex;
@@ -61,7 +64,7 @@ height:100vh;
    SIDEBAR
 ========================= */
 .sidebar{
-width:340px;
+width:360px;
 background:#111827;
 border-right:1px solid #1f2937;
 display:flex;
@@ -271,6 +274,7 @@ gap:8px;
 
 /* bubble */
 .bubble{
+background:#1f2937;
 padding:10px 12px;
 border-radius:12px;
 max-width:70%;
@@ -329,11 +333,10 @@ color:white;
 }
 
 /* =========================
-   MOBILE MODE (IMPORTANT)
+   MOBILE RESPONSIVE
 ========================= */
 @media(max-width:768px){
 
-/* sidebar jadi overlay */
 .sidebar{
 position:fixed;
 left:-100%;
@@ -348,20 +351,13 @@ transition:.3s;
 left:0;
 }
 
-/* chat full screen */
 .chat{
 width:100%;
 }
 
-/* bubble lebih kecil */
 .bubble{
 max-width:80%;
 font-size:13px;
-}
-
-/* header lebih compact */
-.chat-header{
-padding:0 10px;
 }
 
 }
