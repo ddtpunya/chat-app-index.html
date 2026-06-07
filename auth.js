@@ -17,7 +17,7 @@ from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { auth, db } from "./firebase.js";
 
 const ALLOWED_EMAILS=[
-
+"ddtbukudosa@gmail.com",
 "anthonyan4556@gmail.com",
 "muhwahyuim261@gmail.com",
 "elmanjayahulu8@gmail.com"
