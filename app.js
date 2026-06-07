@@ -142,3 +142,92 @@ if (sendBtn) {
   sendBtn.addEventListener("click", async () => {
     const text = input.value.trim();
     if (!text) return;
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Belum login");
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "messages"), {
+        text: text,
+        uid: user.uid,
+        name: user.displayName || user.email.split("@")[0],
+        email: user.email,
+        photo: user.photoURL || "https://ui-avatars.com/api/?name=" + (user.displayName || "DDT"),
+        chatId: currentChatId,
+        createdAt: serverTimestamp()
+      });
+
+      input.value = "";
+      scrollBottom();
+    } catch (e) {
+      console.log(e);
+    }
+  });
+}
+
+/* =========================
+   BUKA ROOM PRIVATE CHAT
+========================= */
+window.openChat = function (otherUser) {
+  const me = auth.currentUser;
+  if (!me) return;
+
+  currentChatId = me.uid < otherUser.uid
+    ? me.uid + "_" + otherUser.uid
+    : otherUser.uid + "_" + me.uid;
+
+  if (roomName) {
+    roomName.innerText = otherUser.name || "Private Chat";
+  }
+};
+
+/* ==========================================
+   REALTIME LISTEN CHAT & RENDER (SEBARIS)
+========================================== */
+const q = query(collection(db, "messages"), orderBy("createdAt"));
+
+onSnapshot(q, (snapshot) => {
+  if (!messages) return;
+  messages.innerHTML = "";
+
+  const me = auth.currentUser;
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+
+    if (data.chatId !== currentChatId && data.chatId !== "global") return;
+
+    const isMe = me && data.uid === me.uid;
+
+    const row = document.createElement("div");
+    row.className = "message";
+    row.style.justifyContent = "flex-start"; 
+
+    const photo = data.photo || "https://ui-avatars.com/api/?name=" + encodeURIComponent(data.name);
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+
+    // Membedakan warna nama pengirim agar mudah dibaca (Diri sendiri merah muda, orang lain biru)
+    const senderColor = isMe ? "#e11d48" : "#1d4ed8";
+
+    // Menyusun nama pengirim dan isi teks berdampingan sebaris
+    bubble.innerHTML = `
+      <span class="sender" style="color: ${senderColor}; font-weight: 700; margin-right: 6px;">${data.name}:</span>
+      <span style="color: #111827;">${data.text}</span>
+    `;
+
+    row.innerHTML = `
+      <img src="${photo}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; margin-right: 10px; flex-shrink: 0;">
+      ${bubble.outerHTML}
+    `;
+
+    messages.appendChild(row);
+  });
+
+  // Otomatis gulung scrollbar ke posisi paling bawah setelah render selesai
+  scrollBottom();
+});
