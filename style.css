@@ -1,12 +1,3 @@
-Ada sedikit masalah penempatan pada kode CSS yang Anda kirimkan. Gaya desain model forum (`.forum-message-row` dkk) **secara tidak sengaja terselip di dalam blok `@media (max-width: 768px)**` sebelum penutupnya selesai.
-
-Dampaknya, jika kodenya dibiarkan seperti itu, tampilan model forum **hanya akan muncul saat aplikasi dibuka di HP**, sedangkan saat dibuka di desktop, tampilannya bisa berantakan atau kembali menggunakan struktur yang lama.
-
-Saya sudah merapikan susunannya. Gaya model forum telah saya keluarkan dari blok mobile agar bisa aktif di desktop maupun HP secara adil, dan tanda kurung kurawal penutup untuk pengaturan mobile juga sudah diperbaiki.
-
-Silakan ganti seluruh isi file `style.css` Anda dengan kode bersih yang sudah rapi di bawah ini:
-
-```css
 /* ==========================================
    BASE STYLES
    ========================================== */
@@ -467,5 +458,3 @@ body{
         height: 38px;
     }
 }
-
-```
