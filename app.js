@@ -54,6 +54,18 @@ sendBtn.addEventListener("click", async () => {
 // =====================
 // 2. REALTIME LISTENER
 // =====================
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const q = query(
+    collection(db, "messages"),
+    orderBy("createdAt")
+);
+
 onSnapshot(q, (snapshot) => {
 
     messages.innerHTML = "";
@@ -62,9 +74,19 @@ onSnapshot(q, (snapshot) => {
 
         const data = doc.data();
 
+        const time = data.createdAt
+            ? new Date(data.createdAt.seconds * 1000).toLocaleString()
+            : "";
+
         const div = document.createElement("div");
 
-        div.textContent = data.text;
+        div.innerHTML = `
+            <b>${data.name || data.email}</b><br>
+            ${data.text}
+            <br>
+            <small>${time}</small>
+            <hr>
+        `;
 
         messages.appendChild(div);
 
