@@ -35,6 +35,19 @@ sendBtn.addEventListener("click", async () => {
     const text = input.value.trim();
     if (!text) return;
 
+    const user = auth.currentUser;
+
+    await addDoc(collection(db, "messages"), {
+        text: text,
+        name: user.displayName || user.email.split("@")[0],
+        email: user.email,
+        photo: user.photoURL,
+        createdAt: serverTimestamp()
+    });
+
+    input.value = "";
+});
+
     await addDoc(collection(db, "messages"), {
 
         text: text,
