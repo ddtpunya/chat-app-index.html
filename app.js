@@ -15,18 +15,24 @@ const messages = document.getElementById("messages");
 const userList = document.getElementById("userList");
 
 
-input.addEventListener("keydown", (e) => {
+// =========================
+// ENTER = SEND (FIXED)
+// =========================
+if (input && sendBtn) {
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendBtn.click();
+        }
+    });
+}
 
-    if (e.key === "Enter") {
-        e.preventDefault();
-        sendBtn.click();
-    }
 
-});
 // =========================
 // CURRENT CHAT STATE
 // =========================
 let currentChatId = "global";
+
 
 // =========================
 // SEND MESSAGE
@@ -43,18 +49,24 @@ sendBtn.addEventListener("click", async () => {
         return;
     }
 
-    await addDoc(collection(db, "messages"), {
-        text,
-        uid: user.uid,
-        name: user.displayName || user.email.split("@")[0],
-        email: user.email,
-        photo: user.photoURL,
-        chatId: currentChatId,
-        createdAt: serverTimestamp()
-    });
+    try {
+        await addDoc(collection(db, "messages"), {
+            text,
+            uid: user.uid,
+            name: user.displayName || user.email.split("@")[0],
+            email: user.email,
+            photo: user.photoURL,
+            chatId: currentChatId,
+            createdAt: serverTimestamp()
+        });
 
-    input.value = "";
+        input.value = "";
+
+    } catch (err) {
+        console.error("SEND ERROR:", err);
+    }
 });
+
 
 // =========================
 // OPEN CHAT FUNCTION
@@ -72,6 +84,7 @@ window.openChat = function (otherUser) {
 
     console.log("OPEN CHAT:", currentChatId);
 };
+
 
 // =========================
 // REALTIME CHAT
@@ -103,15 +116,18 @@ onSnapshot(q, (snapshot) => {
 
         div.innerHTML = `
             ${!isMe ? `<img src="${data.photo}" style="width:35px;height:35px;border-radius:50%;">` : ""}
+            
             <div style="
                 background:${isMe ? "#DCF8C6" : "#f1f1f1"};
                 padding:8px 12px;
                 border-radius:10px;
                 max-width:60%;
+                word-wrap: break-word;
             ">
                 <b>${data.name}</b><br>
                 ${data.text}
             </div>
+
             ${isMe ? `<img src="${data.photo}" style="width:35px;height:35px;border-radius:50%;">` : ""}
         `;
 
