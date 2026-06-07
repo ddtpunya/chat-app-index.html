@@ -12,11 +12,10 @@ import {
 const sendBtn = document.getElementById("sendBtn");
 const input = document.getElementById("messageInput");
 const messages = document.getElementById("messages");
-const userList = document.getElementById("userList");
 
 
 // =========================
-// ENTER = SEND (FIXED)
+// ENTER = SEND
 // =========================
 if (input && sendBtn) {
     input.addEventListener("keydown", (e) => {
@@ -29,9 +28,17 @@ if (input && sendBtn) {
 
 
 // =========================
-// CURRENT CHAT STATE
+// CHAT STATE
 // =========================
 let currentChatId = "global";
+
+
+// =========================
+// AUTO SCROLL BOTTOM
+// =========================
+function scrollToBottom() {
+    messages.scrollTop = messages.scrollHeight;
+}
 
 
 // =========================
@@ -62,6 +69,9 @@ sendBtn.addEventListener("click", async () => {
 
         input.value = "";
 
+        // 🔥 AUTO SCROLL setelah kirim
+        setTimeout(scrollToBottom, 100);
+
     } catch (err) {
         console.error("SEND ERROR:", err);
     }
@@ -69,7 +79,7 @@ sendBtn.addEventListener("click", async () => {
 
 
 // =========================
-// OPEN CHAT FUNCTION
+// OPEN CHAT
 // =========================
 window.openChat = function (otherUser) {
 
@@ -104,21 +114,19 @@ onSnapshot(q, (snapshot) => {
 
         if (data.chatId !== currentChatId && data.chatId !== "global") return;
 
-        const isMe = auth.currentUser && data.uid === auth.currentUser.uid;
-
         const div = document.createElement("div");
 
         div.style.display = "flex";
         div.style.alignItems = "center";
         div.style.gap = "10px";
         div.style.margin = "10px 0";
-        div.style.justifyContent = isMe ? "flex-end" : "flex-start";
+        div.style.justifyContent = "flex-start";
 
         div.innerHTML = `
-            ${!isMe ? `<img src="${data.photo}" style="width:35px;height:35px;border-radius:50%;">` : ""}
-            
+            <img src="${data.photo}" style="width:35px;height:35px;border-radius:50%;">
+
             <div style="
-                background:${isMe ? "#DCF8C6" : "#f1f1f1"};
+                background:#f1f1f1;
                 padding:8px 12px;
                 border-radius:10px;
                 max-width:60%;
@@ -127,11 +135,12 @@ onSnapshot(q, (snapshot) => {
                 <b>${data.name}</b><br>
                 ${data.text}
             </div>
-
-            ${isMe ? `<img src="${data.photo}" style="width:35px;height:35px;border-radius:50%;">` : ""}
         `;
 
         messages.appendChild(div);
     });
+
+    // 🔥 AUTO SCROLL setiap ada pesan baru
+    setTimeout(scrollToBottom, 100);
 
 });
