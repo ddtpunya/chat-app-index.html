@@ -789,7 +789,86 @@ font-size:18px;
     .input-box .bottom-btn:nth-child(4)  /* Tombol klip kertas/attach file */ {
         display: none; 
     }
+/* ==========================================
+   TAMPILAN BARU MODEL FORUM / DISCORD / SLACK
+   ========================================== */
 
+.forum-message-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 4px 10px;
+    width: 100%;
+}
+
+/* Efek hover samar saat kursor diarahkan ke baris pesan */
+.forum-message-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 6px;
+}
+
+.forum-avatar-area {
+    flex-shrink: 0;
+}
+
+.forum-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.forum-body-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.forum-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.forum-sender-name {
+    font-weight: 700;
+    color: #2563eb; /* Warna biru sesuai gambar Anda */
+    font-size: 15px;
+}
+
+.forum-timestamp {
+    color: #9ca3af; /* Warna abu-abu tipis */
+    font-size: 12px;
+}
+
+.forum-text {
+    color: #1f2937;
+    font-size: 15px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap; /* Biarkan tombol enter/pindah baris berfungsi */
+}
+
+/* Tombol hapus sampah kecil */
+.forum-delete-btn {
+    cursor: pointer; 
+    color: #9ca3af; 
+    font-size: 11px;
+    margin-left: 5px;
+    transition: color 0.2s;
+}
+
+.forum-delete-btn:hover {
+    color: #ef4444; /* Berubah merah saat disorot */
+}
+
+/* Penyesuaian Ruang Obrolan agar terlihat putih bersih tanpa bayangan */
+#messages {
+    background: #ffffff !important;
+    padding: 20px 25px;
+}
     #messageInput {
         height: 42px;
         font-size: 14px;
