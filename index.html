@@ -8,23 +8,26 @@
 
 <link rel="stylesheet" href="style.css">
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
-
+<link
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+rel="stylesheet"
+/>
 </head>
+
 <body>
 
 <!-- LOGIN -->
-
 <div id="loginPage">
 
     <div class="login-card">
 
         <h1>CHAT DDT</h1>
 
+        <p>Realtime Group Chat</p>
+
         <button id="loginBtn">
-
+            <i class="fa-brands fa-google"></i>
             Login Google
-
         </button>
 
     </div>
@@ -32,185 +35,179 @@
 </div>
 
 <!-- CHAT -->
-
 <div id="chatPage" style="display:none;">
 
-<!-- SIDEBAR -->
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-<div class="sidebar">
+        <!-- USER CARD -->
+        <div class="profile-card">
 
-<div class="profile">
+            <div class="profile-left">
 
-<div class="profile-left">
+                <img
+                    id="myPhoto"
+                    src="https://ui-avatars.com/api/?name=DDT"
+                    class="profile-avatar"
+                >
 
-<img id="myPhoto"
-src="https://i.pravatar.cc/100">
+                <div>
 
-<div>
+                    <div id="myName" class="profile-name">
+                        Loading...
+                    </div>
 
-<div id="myName">
+                    <div class="online-status">
 
-Loading...
+                        <span class="dot"></span>
 
-</div>
+                        Online
 
-<div class="online">
+                    </div>
 
-<span></span>
+                </div>
 
-Online
+            </div>
 
-</div>
+            <div class="profile-actions">
 
-</div>
+                <button class="icon-btn">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
 
-</div>
+                <button
+                    id="logoutBtn"
+                    class="icon-btn"
+                >
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
 
-<div class="profile-right">
+            </div>
 
-<button>
+        </div>
 
-<i class="fa fa-gear"></i>
+        <!-- SEARCH -->
+        <div class="search-box">
 
-</button>
+            <i class="fa-solid fa-magnifying-glass"></i>
 
-<button>
+            <input
+                type="text"
+                placeholder="Cari user atau grup..."
+            >
 
-<i class="fa fa-arrow-right-from-bracket"></i>
+        </div>
 
-</button>
+        <!-- GROUP BUTTON -->
+        <button class="groups-btn">
 
-</div>
+            <i class="fa-regular fa-message"></i>
 
-</div>
+            Groups
 
-<div class="search-box">
+        </button>
 
-<i class="fa fa-search"></i>
+        <!-- CREATE GROUP -->
+        <button class="create-group-btn">
 
-<input
-type="text"
-placeholder="Cari user atau grup..."
->
+            <i class="fa-solid fa-plus"></i>
 
-</div>
+            Buat Grup Baru
 
-<button class="group-btn">
+        </button>
 
-<i class="fa-regular fa-message"></i>
+        <!-- GROUP LIST -->
+        <div id="userList" class="group-list">
 
-Groups
+            <!-- Firebase Render -->
 
-</button>
+        </div>
 
-<button class="new-group">
+    </aside>
 
-+
+    <!-- CHAT -->
+    <main class="chat">
 
-Buat Grup Baru
+        <!-- HEADER -->
+        <div class="chat-header">
 
-</button>
+            <div class="chat-header-left">
 
-<ul id="userList">
+                <img
+                    src="https://ui-avatars.com/api/?name=DDT"
+                    class="chat-group-avatar"
+                >
 
-</ul>
+                <div>
 
-</div>
+                    <div
+                        class="group-title"
+                        id="roomName"
+                    >
+                        Room Chat
+                    </div>
 
-<!-- CHAT -->
+                    <div
+                        class="group-members"
+                        id="roomMembers"
+                    >
+                        0 anggota
+                    </div>
 
-<div class="chat">
+                </div>
 
-<div class="top-warning">
+            </div>
 
-Aktifkan notifikasi browser agar pesan masuk selalu realtime!
+            <div class="chat-header-right">
 
-</div>
+                <button class="icon-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
 
-<div class="chat-header">
+                <button class="icon-btn">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
 
-<div class="chat-info">
+            </div>
 
-<img
-src="https://i.pravatar.cc/100"
-id="roomPhoto"
->
+        </div>
 
-<div>
+        <!-- CHAT BODY -->
+        <div id="messages">
 
-<div class="room-name">
+        </div>
 
-Room Chat
+        <!-- INPUT -->
+        <div class="input-box">
 
-</div>
+            <button class="bottom-btn">
+                😊
+            </button>
 
-<div class="room-member">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="Ketik pesan..."
+            >
 
-Realtime Firebase
+            <button class="bottom-btn">
+                <i class="fa-regular fa-image"></i>
+            </button>
 
-</div>
+            <button class="bottom-btn">
+                <i class="fa-solid fa-paperclip"></i>
+            </button>
 
-</div>
+            <button
+                id="sendBtn"
+                class="send-btn"
+            >
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
 
-</div>
+        </div>
 
-<div class="chat-tools">
-
-<button>
-
-<i class="fa fa-search"></i>
-
-</button>
-
-<button>
-
-<i class="fa fa-gear"></i>
-
-</button>
-
-</div>
-
-</div>
-
-<div id="messages">
-
-</div>
-
-<div class="input-box">
-
-<button class="emoji">
-
-😊
-
-</button>
-
-<input
-id="messageInput"
-type="text"
-placeholder="Ketik pesan..."
->
-
-<button>
-
-📎
-
-</button>
-
-<button>
-
-🖼
-
-</button>
-
-<button id="sendBtn">
-
-✈
-
-</button>
-
-</div>
-
-</div>
+    </main>
 
 </div>
 
