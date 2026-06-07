@@ -8,19 +8,21 @@
 
 <link rel="stylesheet" href="style.css">
 
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+<link
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+rel="stylesheet"
+/>
 </head>
 
 <body>
 
-<!-- =========================
-     LOGIN
-========================= -->
+<!-- LOGIN -->
 <div id="loginPage">
 
     <div class="login-card">
 
         <h1>CHAT DDT</h1>
+
         <p>Realtime Group Chat</p>
 
         <button id="loginBtn">
@@ -32,31 +34,22 @@
 
 </div>
 
-
-<!-- =========================
-     CHAT PAGE (MOBILE READY)
-========================= -->
+<!-- CHAT -->
 <div id="chatPage" style="display:none;">
 
-    <!-- SIDEBAR (MOBILE SLIDE) -->
-    <aside class="sidebar" id="sidebar">
-
-        <!-- CLOSE BUTTON (MOBILE ONLY) -->
-        <div class="mobile-topbar">
-            <span>Chats</span>
-            <button id="closeSidebar">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
         <!-- USER CARD -->
         <div class="profile-card">
 
             <div class="profile-left">
 
-                <img id="myPhoto"
-                     src="https://ui-avatars.com/api/?name=DDT"
-                     class="profile-avatar">
+                <img
+                    id="myPhoto"
+                    src="https://ui-avatars.com/api/?name=DDT"
+                    class="profile-avatar"
+                >
 
                 <div>
 
@@ -65,8 +58,11 @@
                     </div>
 
                     <div class="online-status">
+
                         <span class="dot"></span>
+
                         Online
+
                     </div>
 
                 </div>
@@ -79,7 +75,10 @@
                     <i class="fa-solid fa-gear"></i>
                 </button>
 
-                <button id="logoutBtn" class="icon-btn">
+                <button
+                    id="logoutBtn"
+                    class="icon-btn"
+                >
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
 
@@ -92,56 +91,75 @@
 
             <i class="fa-solid fa-magnifying-glass"></i>
 
-            <input type="text" placeholder="Cari user atau grup...">
+            <input
+                type="text"
+                placeholder="Cari user atau grup..."
+            >
 
         </div>
 
-        <!-- BUTTONS -->
+        <!-- GROUP BUTTON -->
         <button class="groups-btn">
+
             <i class="fa-regular fa-message"></i>
+
             Groups
+
         </button>
 
+        <!-- CREATE GROUP -->
         <button class="create-group-btn">
+
             <i class="fa-solid fa-plus"></i>
+
             Buat Grup Baru
+
         </button>
 
-        <!-- LIST -->
-        <div id="userList" class="group-list"></div>
+        <!-- GROUP LIST -->
+        <div id="userList" class="group-list">
+
+            <!-- Firebase Render -->
+
+        </div>
 
     </aside>
 
-
-    <!-- CHAT AREA -->
+    <!-- CHAT -->
     <main class="chat">
 
         <!-- HEADER -->
         <div class="chat-header">
 
-            <!-- MOBILE MENU BUTTON -->
-            <button id="openSidebar" class="mobile-menu-btn">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-
             <div class="chat-header-left">
 
-                <img src="https://ui-avatars.com/api/?name=DDT"
-                     class="chat-group-avatar">
+                <img
+                    src="https://ui-avatars.com/api/?name=DDT"
+                    class="chat-group-avatar"
+                >
 
                 <div>
-                    <div id="roomName" class="group-title">
+
+                    <div
+                        class="group-title"
+                        id="roomName"
+                    >
                         Room Chat
                     </div>
 
-                    <div id="roomMembers" class="group-members">
+                    <div
+                        class="group-members"
+                        id="roomMembers"
+                    >
                         0 anggota
                     </div>
+
                 </div>
 
             </div>
 
             <div class="chat-header-right">
+
                 <button class="icon-btn">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
@@ -149,23 +167,28 @@
                 <button class="icon-btn">
                     <i class="fa-solid fa-gear"></i>
                 </button>
+
             </div>
 
         </div>
 
+        <!-- CHAT BODY -->
+        <div id="messages">
 
-        <!-- MESSAGES -->
-        <div id="messages"></div>
-
+        </div>
 
         <!-- INPUT -->
         <div class="input-box">
 
-            <button class="bottom-btn">😊</button>
+            <button class="bottom-btn">
+                😊
+            </button>
 
-            <input type="text"
-                   id="messageInput"
-                   placeholder="Ketik pesan...">
+            <input
+                type="text"
+                id="messageInput"
+                placeholder="Ketik pesan..."
+            >
 
             <button class="bottom-btn">
                 <i class="fa-regular fa-image"></i>
@@ -175,7 +198,10 @@
                 <i class="fa-solid fa-paperclip"></i>
             </button>
 
-            <button id="sendBtn" class="send-btn">
+            <button
+                id="sendBtn"
+                class="send-btn"
+            >
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
 
@@ -184,7 +210,6 @@
     </main>
 
 </div>
-
 
 <script type="module" src="firebase.js"></script>
 <script type="module" src="auth.js"></script>
