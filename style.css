@@ -26,7 +26,7 @@ body {
 }
 
 /* ===================== */
-/* CHAT LAYOUT */
+/* CHAT PAGE LAYOUT */
 /* ===================== */
 #chatPage {
     display: flex;
@@ -46,7 +46,7 @@ body {
 }
 
 .sidebar h3 {
-    margin-top: 0;
+    margin: 0 0 10px 0;
 }
 
 .sidebar ul {
@@ -62,6 +62,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    transition: 0.2s;
 }
 
 .sidebar li:hover {
@@ -75,10 +76,14 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    min-height: 0; /* 🔥 WAJIB untuk scroll fix */
     background: #e5ddd5;
 }
 
+/* ===================== */
 /* HEADER */
+/* ===================== */
 .header {
     padding: 15px;
     background: white;
@@ -87,7 +92,7 @@ body {
 }
 
 /* ===================== */
-/* MESSAGES */
+/* MESSAGES (SCROLL AREA) */
 /* ===================== */
 #messages {
     flex: 1;
@@ -95,9 +100,14 @@ body {
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+
+    height: 0;       /* 🔥 WAJIB FIX SCROLL */
+    min-height: 0;   /* 🔥 WAJIB FIX FLEX BUG */
 }
 
+/* ===================== */
 /* BUBBLE CHAT */
+/* ===================== */
 #messages div {
     max-width: 60%;
     padding: 10px 12px;
@@ -105,10 +115,11 @@ body {
     border-radius: 10px;
     background: #ffffff;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    word-wrap: break-word;
 }
 
 /* ===================== */
-/* INPUT */
+/* INPUT AREA */
 /* ===================== */
 .input-box {
     display: flex;
@@ -136,9 +147,16 @@ body {
 }
 
 /* ===================== */
-/* TIME TEXT */
+/* TEXT TIME */
 /* ===================== */
 small {
     color: gray;
     font-size: 11px;
+}
+
+/* ===================== */
+/* SMOOTH SCROLL (OPTIONAL) */
+/* ===================== */
+#messages {
+    scroll-behavior: smooth;
 }
