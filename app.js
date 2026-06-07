@@ -6,7 +6,9 @@ import {
   query,
   where,
   orderBy,
-  onSnapshot
+  onSnapshot,
+  doc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const sendBtn = document.getElementById("sendBtn");
@@ -16,6 +18,11 @@ const roomName = document.getElementById("roomName");
 
 let currentChatId = "global";
 let unsubscribeChat = null; // Menyimpan fungsi untuk mematikan listener lama
+
+// Elemen Navigasi Mobile
+const sidebar = document.querySelector(".sidebar");
+const chatArea = document.querySelector(".chat");
+const backBtn = document.getElementById("backToSidebarBtn");
 
 // =========================
 // ENTER = SEND
@@ -56,7 +63,7 @@ sendBtn.addEventListener("click", async () => {
             name: user.displayName || user.email.split("@")[0],
             email: user.email,
             photo: user.photoURL,
-            chatId: currentChatId, // Berisi 'global' atau 'UID_A_UID_B'
+            chatId: currentChatId, // Berisi 'global' or 'UID_A_UID_B'
             createdAt: serverTimestamp()
         });
 
@@ -68,8 +75,24 @@ sendBtn.addEventListener("click", async () => {
 });
 
 // =========================
-// LOAD MESSAGES (REALTIME & FILTERED)
+// HAPUS PESAN
 // =========================
+window.deleteMessage = async function (messageId) {
+    const konfirmasi = confirm("Apakah Anda yakin ingin menghapus pesan ini?");
+    if (!konfirmasi) return;
+
+    try {
+        await deleteDoc(doc(db, "messages", messageId));
+        console.log("Pesan berhasil dihapus:", messageId);
+    } catch (err) {
+        console.error("Gagal menghapus pesan:", err);
+        alert("Anda tidak memiliki izin untuk menghapus pesan ini.");
+    }
+};
+
+// ========================================================
+// LOAD MESSAGES (REALTIME & FILTERED - TAMPILAN MODEL FORUM)
+// ========================================================
 function listenToChat(chatId) {
     // Matikan listener sebelumnya jika ada agar tidak tumpang tindih
     if (unsubscribeChat) unsubscribeChat();
@@ -84,28 +107,45 @@ function listenToChat(chatId) {
     unsubscribeChat = onSnapshot(q, (snapshot) => {
         messages.innerHTML = "";
 
-        snapshot.forEach((doc) => {
-            const data = doc.data();
+        snapshot.forEach((snapshotDoc) => {
+            const data = snapshotDoc.data();
+            const messageId = snapshotDoc.id;
             const me = auth.currentUser;
             if (!me) return;
 
-            // Tentukan apakah ini pesan kita atau orang lain
             const isMe = data.uid === me.uid;
-
             const div = document.createElement("div");
-            div.className = "message";
             
-            // Atur posisi: Jika pesan kita, taruh di kanan. Jika orang lain, di kiri.
-            div.style.justifyContent = isMe ? "flex-end" : "flex-start";
+            // Gunakan class baru khusus untuk tema forum/Discord ini
+            div.className = "forum-message-row";
 
-            // Gunakan struktur CSS class yang sudah Anda buat di style.css
+            const photoURL = data.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}`;
+
+            // Mengambil format waktu jam:menit (HH:MM)
+            let timeString = "";
+            if (data.createdAt && data.createdAt.toDate) {
+                const dateObj = data.createdAt.toDate();
+                timeString = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            } else {
+                timeString = "Baru saja";
+            }
+
             div.innerHTML = `
-                ${!isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar">` : ''}
-                <div class="bubble" style="background: ${isMe ? '#d9fdd3' : 'white'}; border-radius: ${isMe ? '12px 12px 0 12px' : '12px 12px 12px 0'};">
-                    <div class="sender" style="color: ${isMe ? '#059669' : '#1d4ed8'}">${isMe ? 'Anda' : data.name}</div>
-                    <div>${data.text}</div>
+                <div class="forum-avatar-area">
+                    <img src="${photoURL}" class="forum-avatar" alt="avatar">
                 </div>
-                ${isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar" style="margin-left: 10px;">` : ''}
+
+                <div class="forum-body-area">
+                    <div class="forum-header">
+                        <span class="forum-sender-name">${isMe ? 'Anda' : data.name}</span>
+                        <span class="forum-timestamp">${timeString}</span>
+                        
+                        ${isMe ? `<i class="fa-solid fa-trash forum-delete-btn" onclick="deleteMessage('${messageId}')" title="Hapus Pesan"></i>` : ''}
+                    </div>
+                    <div class="forum-text">
+                        ${data.text}
+                    </div>
+                </div>
             `;
 
             messages.appendChild(div);
@@ -115,29 +155,46 @@ function listenToChat(chatId) {
     });
 }
 
-// =========================
-// OPEN CHAT (PRIVATE CHAT)
-// =========================
+// ========================================================
+// OPEN CHAT (PRIVATE CHAT, GLOBAL, & SINKRONISASI AVATAR)
+// ========================================================
 window.openChat = function (otherUser) {
     const me = auth.currentUser;
     if (!me) return;
 
+    const roomAvatarImg = document.getElementById("roomAvatar"); // Mengambil elemen avatar di header atas
+
     if (otherUser === "global") {
         currentChatId = "global";
         document.getElementById("roomName").innerText = "Room Chat Global";
+        
+        // SINKRONISASI: Ubah foto header atas menjadi foto profil Gmail Anda sendiri
+        if (roomAvatarImg) {
+            roomAvatarImg.src = me.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(me.displayName || 'Global')}`;
+        }
     } else {
         // Gabungkan UID Anda dan UID tujuan secara alfabetis/terurut
-        // Misal UID Anda 'abc' dan tujuan 'xyz', ID-nya jadi 'abc_xyz'
-        // Ini memastikan kedua user masuk ke kamar ID yang sama persis
         currentChatId = me.uid < otherUser.uid 
             ? me.uid + "_" + otherUser.uid 
             : otherUser.uid + "_" + me.uid;
         
         document.getElementById("roomName").innerText = otherUser.name;
+
+        // SINKRONISASI: Jika chat pribadi, ubah foto header atas jadi foto profil lawan bicara
+        if (roomAvatarImg) {
+            roomAvatarImg.src = otherUser.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.name)}`;
+        }
     }
 
     console.log("Kamar Chat Aktif:", currentChatId);
-    listenToChat(currentChatId); // Jalankan fungsi untuk mendengarkan pesan di kamar ini
+    listenToChat(currentChatId); // Mendengarkan pesan di kamar aktif
+
+    // Jika di HP, sembunyikan sidebar dan tunjukkan area chat saat room/kontak diklik
+    if (isMobile() && sidebar && chatArea) {
+        sidebar.style.display = "none";
+        chatArea.style.display = "flex";
+        if (backBtn) backBtn.style.display = "block"; // Tampilkan tombol kembali
+    }
 };
 
 // Inisialisasi awal saat pertama kali dimuat
@@ -146,31 +203,15 @@ auth.onAuthStateChanged((user) => {
         window.openChat("global");
     }
 });
+
 // ==========================================
 // KONTROL RESPONSIVE MOBILE (NAVIGASI SCREEN)
 // ==========================================
-const sidebar = document.querySelector(".sidebar");
-const chatArea = document.querySelector(".chat");
-const backBtn = document.getElementById("backToSidebarBtn");
 
 // Deteksi apakah resolusi layar saat ini adalah mobile (lebar <= 768px)
 function isMobile() {
     return window.innerWidth <= 768;
 }
-
-// Modifikasi fungsi openChat yang sudah ada agar mendukung perpindahan halaman di HP
-const originalOpenChat = window.openChat;
-window.openChat = function (otherUser) {
-    // Jalankan fungsi open chat asli bawaan firebase kita sebelumnya
-    originalOpenChat(otherUser);
-
-    // Jika di HP, sembunyikan sidebar dan tunjukkan area chat saat kontak diklik
-    if (isMobile() && sidebar && chatArea) {
-        sidebar.style.display = "none";
-        chatArea.style.display = "flex";
-        if (backBtn) backBtn.style.display = "block"; // Tampilkan tombol kembali
-    }
-};
 
 // Logika ketika tombol "Kembali" di klik di HP
 if (backBtn) {
