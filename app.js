@@ -122,33 +122,27 @@ onSnapshot(q, (snapshot) => {
     const isMe = me && data.uid === me.uid;
 
     const row = document.createElement("div");
-    row.className = "message";
+row.className = "msg-item";
 
-    const photo =
-      data.photo ||
-      "https://ui-avatars.com/api/?name=" + encodeURIComponent(data.name);
+row.innerHTML = `
+  <div class="avatar">
+    <img src="${photo}" />
+  </div>
 
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
+  <div class="msg-content">
 
-    bubble.innerHTML = `
-      <div class="sender">${data.name}</div>
-      <div>${data.text}</div>
-    `;
+    <div class="msg-header">
+      <div class="name">${data.name}</div>
+      <div class="time">${formatTime(data.createdAt)}</div>
+      <div class="badge">1 pesan</div>
+    </div>
 
-    row.innerHTML = isMe
-      ? `
-        <div class="msg-right">
-          ${bubble.outerHTML}
-          <img src="${photo}" class="avatar">
-        </div>
-      `
-      : `
-        <div class="msg-left">
-          <img src="${photo}" class="avatar">
-          ${bubble.outerHTML}
-        </div>
-      `;
+    <div class="msg-text">
+      ${data.text}
+    </div>
+
+  </div>
+`;
 
     messages.appendChild(row);
 
