@@ -47,10 +47,7 @@ sendBtn.addEventListener("click", async () => {
     if (!text) return;
 
     const user = auth.currentUser;
-    if (!user) {
-        alert("Belum login");
-        return;
-    }
+    if (!user) return;
 
     try {
         await addDoc(collection(db, "messages"), {
@@ -59,14 +56,14 @@ sendBtn.addEventListener("click", async () => {
             name: user.displayName || user.email.split("@")[0],
             email: user.email,
             photo: user.photoURL,
-            chatId: currentChatId,
+            chatId: currentChatId, // Berisi 'global' atau 'UID_A_UID_B'
             createdAt: serverTimestamp()
         });
 
         input.value = "";
         scrollToBottom();
     } catch (err) {
-        console.error("SEND ERROR:", err);
+        console.error("Gagal mengirim pesan:", err);
     }
 });
 
@@ -119,7 +116,7 @@ function listenToChat(chatId) {
 }
 
 // =========================
-// OPEN CHAT (PRIVATE & GLOBAL CHAT)
+// OPEN CHAT (PRIVATE CHAT)
 // =========================
 window.openChat = function (otherUser) {
     const me = auth.currentUser;
@@ -127,17 +124,20 @@ window.openChat = function (otherUser) {
 
     if (otherUser === "global") {
         currentChatId = "global";
-        if (roomName) roomName.innerText = "Room Chat Global";
+        document.getElementById("roomName").innerText = "Room Chat Global";
     } else {
+        // Gabungkan UID Anda dan UID tujuan secara alfabetis/terurut
+        // Misal UID Anda 'abc' dan tujuan 'xyz', ID-nya jadi 'abc_xyz'
+        // Ini memastikan kedua user masuk ke kamar ID yang sama persis
         currentChatId = me.uid < otherUser.uid 
             ? me.uid + "_" + otherUser.uid 
             : otherUser.uid + "_" + me.uid;
         
-        if (roomName) roomName.innerText = otherUser.name;
+        document.getElementById("roomName").innerText = otherUser.name;
     }
 
-    console.log("OPEN CHAT:", currentChatId);
-    listenToChat(currentChatId); // Muat chat yang sesuai
+    console.log("Kamar Chat Aktif:", currentChatId);
+    listenToChat(currentChatId); // Jalankan fungsi untuk mendengarkan pesan di kamar ini
 };
 
 // Inisialisasi awal saat pertama kali dimuat
