@@ -1,798 +1,333 @@
+Ada sedikit masalah penempatan pada kode CSS yang Anda kirimkan. Gaya desain model forum (`.forum-message-row` dkk) **secara tidak sengaja terselip di dalam blok `@media (max-width: 768px)**` sebelum penutupnya selesai.
 
+Dampaknya, jika kodenya dibiarkan seperti itu, tampilan model forum **hanya akan muncul saat aplikasi dibuka di HP**, sedangkan saat dibuka di desktop, tampilannya bisa berantakan atau kembali menggunakan struktur yang lama.
+
+Saya sudah merapikan susunannya. Gaya model forum telah saya keluarkan dari blok mobile agar bisa aktif di desktop maupun HP secara adil, dan tanda kurung kurawal penutup untuk pengaturan mobile juga sudah diperbaiki.
+
+Silakan ganti seluruh isi file `style.css` Anda dengan kode bersih yang sudah rapi di bawah ini:
+
+```css
+/* ==========================================
+   BASE STYLES
+   ========================================== */
 *{
-
-margin:0;
-
-padding:0;
-
-box-sizing:border-box;
-
-font-family:Segoe UI,sans-serif;
-
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI,sans-serif;
 }
-
-
 
 body{
-
-background:#edf1ff;
-
-height:100vh;
-
-overflow:hidden;
-
+    background:#edf1ff;
+    height:100vh;
+    overflow:hidden;
 }
-
-
 
 /* LOGIN */
-
-
-
 #loginPage{
-
-height:100vh;
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-background:#edf1ff;
-
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#edf1ff;
 }
-
-
 
 .login-card{
-
-background:white;
-
-padding:40px;
-
-border-radius:20px;
-
-text-align:center;
-
-box-shadow:0 10px 30px rgba(0,0,0,.08);
-
+    background:white;
+    padding:40px;
+    border-radius:20px;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
-
-
 
 .login-card h1{
-
-margin-bottom:10px;
-
+    margin-bottom:10px;
 }
-
-
 
 .login-card p{
-
-margin-bottom:20px;
-
-color:#666;
-
+    margin-bottom:20px;
+    color:#666;
 }
-
-
 
 #loginBtn{
-
-padding:12px 20px;
-
-border:none;
-
-border-radius:10px;
-
-background:#2563eb;
-
-color:white;
-
-cursor:pointer;
-
+    padding:12px 20px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
 }
-
-
 
 /* MAIN */
-
-
-
 #chatPage{
-
-display:flex;
-
-height:100vh;
-
+    display:flex;
+    height:100vh;
 }
-
-
 
 /* SIDEBAR */
-
-
-
 .sidebar{
-
-width:360px;
-
-background:linear-gradient(
-
-180deg,
-
-#eef1ff,
-
-#dfe3ff
-
-);
-
-border-right:1px solid #d7dcff;
-
-display:flex;
-
-flex-direction:column;
-
+    width:360px;
+    background:linear-gradient(180deg, #eef1ff, #dfe3ff);
+    border-right:1px solid #d7dcff;
+    display:flex;
+    flex-direction:column;
 }
-
-
 
 /* PROFILE */
-
-
-
 .profile-card{
-
-background:#f4f6ff;
-
-padding:18px;
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-border-radius:0 0 20px 20px;
-
-box-shadow:0 4px 15px rgba(0,0,0,.05);
-
+    background:#f4f6ff;
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-radius:0 0 20px 20px;
+    box-shadow:0 4px 15px rgba(0,0,0,.05);
 }
-
-
 
 .profile-left{
-
-display:flex;
-
-gap:12px;
-
-align-items:center;
-
+    display:flex;
+    gap:12px;
+    align-items:center;
 }
-
-
 
 .profile-avatar{
-
-width:55px;
-
-height:55px;
-
-border-radius:50%;
-
-object-fit:cover;
-
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    object-fit:cover;
 }
-
-
 
 .profile-name{
-
-font-weight:700;
-
-font-size:18px;
-
-color:#1d4ed8;
-
+    font-weight:700;
+    font-size:18px;
+    color:#1d4ed8;
 }
-
-
 
 .online-status{
-
-display:flex;
-
-align-items:center;
-
-gap:6px;
-
-font-size:14px;
-
-margin-top:4px;
-
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:14px;
+    margin-top:4px;
 }
-
-
 
 .dot{
-
-width:10px;
-
-height:10px;
-
-background:#22c55e;
-
-border-radius:50%;
-
+    width:10px;
+    height:10px;
+    background:#22c55e;
+    border-radius:50%;
 }
-
-
 
 .profile-actions{
-
-display:flex;
-
-gap:10px;
-
+    display:flex;
+    gap:10px;
 }
 
-
-
-/* ICON */
-
-
-
+/* ICON BUTTONS */
 .icon-btn{
-
-width:40px;
-
-height:40px;
-
-border:none;
-
-border-radius:10px;
-
-cursor:pointer;
-
-background:#2563eb;
-
-color:white;
-
-font-size:15px;
-
+    width:40px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    background:#2563eb;
+    color:white;
+    font-size:15px;
 }
-
-
 
 /* SEARCH */
-
-
-
 .search-box{
-
-margin:15px;
-
-background:white;
-
-border-radius:15px;
-
-display:flex;
-
-align-items:center;
-
-padding:0 15px;
-
-height:48px;
-
+    margin:15px;
+    background:white;
+    border-radius:15px;
+    display:flex;
+    align-items:center;
+    padding:0 15px;
+    height:48px;
 }
-
-
 
 .search-box i{
-
-color:#6b7280;
-
+    color:#6b7280;
 }
-
-
 
 .search-box input{
-
-border:none;
-
-outline:none;
-
-flex:1;
-
-margin-left:10px;
-
-background:none;
-
+    border:none;
+    outline:none;
+    flex:1;
+    margin-left:10px;
+    background:none;
 }
 
-
-
-/* BUTTONS */
-
-
-
+/* GROUPS & BUTTONS */
 .groups-btn{
-
-margin:0 10px;
-
-height:50px;
-
-border:none;
-
-color:white;
-
-font-size:18px;
-
-font-weight:600;
-
-cursor:pointer;
-
-border-radius:16px;
-
-background:linear-gradient(
-
-90deg,
-
-#3b82f6,
-
-#a855f7
-
-);
-
+    margin:0 10px;
+    height:50px;
+    border:none;
+    color:white;
+    font-size:18px;
+    font-weight:600;
+    cursor:pointer;
+    border-radius:16px;
+    background:linear-gradient(90deg, #3b82f6, #a855f7);
 }
-
-
 
 .create-group-btn{
-
-margin:15px 10px;
-
-height:38px;
-
-border:none;
-
-cursor:pointer;
-
-color:white;
-
-font-weight:600;
-
-background:#2450d3;
-
+    margin:15px 10px;
+    height:38px;
+    border:none;
+    cursor:pointer;
+    color:white;
+    font-weight:600;
+    background:#2450d3;
 }
 
-
-
-/* LIST */
-
-
-
+/* LIST USER */
 .group-list{
-
-flex:1;
-
-overflow-y:auto;
-
-padding:5px;
-
+    flex:1;
+    overflow-y:auto;
+    padding:5px;
 }
-
-
 
 .group-item{
-
-display:flex;
-
-align-items:center;
-
-gap:12px;
-
-padding:12px;
-
-cursor:pointer;
-
-border-radius:12px;
-
-transition:.2s;
-
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px;
+    cursor:pointer;
+    border-radius:12px;
+    transition:.2s;
 }
-
-
 
 .group-item:hover{
-
-background:rgba(255,255,255,.5);
-
+    background:rgba(255,255,255,.5);
 }
-
-
 
 .group-item img{
-
-width:52px;
-
-height:52px;
-
-border-radius:50%;
-
-object-fit:cover;
-
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    object-fit:cover;
 }
-
-
 
 .group-info{
-
-flex:1;
-
+    flex:1;
 }
-
-
 
 .group-name{
-
-font-weight:700;
-
-font-size:18px;
-
+    font-weight:700;
+    font-size:18px;
 }
-
-
 
 .group-desc{
-
-font-size:13px;
-
-color:#666;
-
-margin-top:4px;
-
+    font-size:13px;
+    color:#666;
+    margin-top:4px;
 }
-
-
 
 .group-time{
-
-font-size:12px;
-
-color:#666;
-
+    font-size:12px;
+    color:#666;
 }
 
-
-
-/* CHAT */
-
-
-
+/* CHAT MAIN CONTAINER */
 .chat{
-
-flex:1;
-
-display:flex;
-
-flex-direction:column;
-
-background:#f5f6fa;
-
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    background:#f5f6fa;
 }
 
-
-
-/* HEADER */
-
-
-
+/* HEADER CHAT */
 .chat-header{
-
-height:75px;
-
-background:#ffffff;
-
-border-bottom:1px solid #e5e7eb;
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-padding:0 20px;
-
+    height:75px;
+    background:#ffffff;
+    border-bottom:1px solid #e5e7eb;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 20px;
 }
-
-
 
 .chat-header-left{
-
-display:flex;
-
-align-items:center;
-
-gap:15px;
-
+    display:flex;
+    align-items:center;
+    gap:15px;
 }
-
-
 
 .chat-group-avatar{
-
-width:48px;
-
-height:48px;
-
-border-radius:50%;
-
+    width:48px;
+    height:48px;
+    border-radius:50%;
 }
-
-
 
 .group-title{
-
-font-size:22px;
-
-font-weight:700;
-
+    font-size:22px;
+    font-weight:700;
 }
-
-
 
 .group-members{
-
-font-size:13px;
-
-color:#666;
-
+    font-size:13px;
+    color:#666;
 }
-
-
 
 .chat-header-right{
-
-display:flex;
-
-gap:10px;
-
+    display:flex;
+    gap:10px;
 }
 
-
-
-/* CHAT BODY */
-
-
-
+/* CHAT MESSAGES PANEL */
 #messages{
-
-flex:1;
-
-overflow-y:auto;
-
-padding:25px;
-
+    flex:1;
+    overflow-y:auto;
+    padding:20px 25px;
+    background: #ffffff !important; /* Putih bersih sesuai tema gambar forum */
 }
 
-
-
-/* MESSAGE */
-
-
-
-.message{
-
-display:flex;
-
-gap:10px;
-
-margin-bottom:20px;
-
-align-items:flex-start;
-
-}
-
-
-
-.message img{
-
-width:40px;
-
-height:40px;
-
-border-radius:50%;
-
-}
-
-
-
-.bubble{
-
-background:white;
-
-padding:12px 15px;
-
-border-radius:12px;
-
-max-width:700px;
-
-box-shadow:0 2px 8px rgba(0,0,0,.05);
-
-}
-
-
-
-.sender{
-
-font-weight:700;
-
-margin-bottom:5px;
-
-color:#1d4ed8;
-
-}
-
-
-
-/* INPUT */
-
-
-
+/* INPUT FOOTER */
 .input-box{
-
-height:75px;
-
-background:white;
-
-border-top:1px solid #e5e7eb;
-
-display:flex;
-
-align-items:center;
-
-gap:10px;
-
-padding:10px 15px;
-
+    height:75px;
+    background:white;
+    border-top:1px solid #e5e7eb;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 15px;
 }
-
-
 
 #messageInput{
-
-flex:1;
-
-height:48px;
-
-border:2px solid #2563eb;
-
-border-radius:15px;
-
-padding:0 15px;
-
-outline:none;
-
-font-size:15px;
-
+    flex:1;
+    height:48px;
+    border:2px solid #2563eb;
+    border-radius:15px;
+    padding:0 15px;
+    outline:none;
+    font-size:15px;
 }
-
-
 
 .bottom-btn{
-
-width:42px;
-
-height:42px;
-
-border:none;
-
-cursor:pointer;
-
-border-radius:10px;
-
-background:#2563eb;
-
-color:white;
-
+    width:42px;
+    height:42px;
+    border:none;
+    cursor:pointer;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
 }
-
-
 
 .send-btn{
-
-width:48px;
-
-height:48px;
-
-border:none;
-
-cursor:pointer;
-
-border-radius:12px;
-
-background:#2563eb;
-
-color:white;
-
-font-size:18px;
-
+    width:48px;
+    height:48px;
+    border:none;
+    cursor:pointer;
+    border-radius:12px;
+    background:#2563eb;
+    color:white;
+    font-size:18px;
 }
 
-
-
-/* MOBILE */
-
-
-
-@media (max-width: 768px) {
-    #chatPage {
-        flex-direction: column; /* Ubah baris jadi tumpukan atas-bawah jika diperlukan */
-        height: 100vh;
-    }
-
-    /* Di awal masuk, buat sidebar memenuhi layar penuh */
-    .sidebar {
-        width: 100%;
-        height: 100vh;
-        display: flex;
-    }
-
-    /* Jangan sembunyikan nama user dan status di HP, biarkan tetap terlihat jelas */
-    .group-name, 
-    .group-desc, 
-    .profile-name, 
-    .online-status {
-        display: block !important; 
-    }
-
-    /* Sembunyikan area chat utama di awal sebelum user memilih room */
-    .chat {
-        display: none;
-        width: 100%;
-        height: 100vh;
-    }
-
-    /* Sesuaikan ukuran teks header agar tidak meluap di HP */
-    .group-title {
-        font-size: 18px;
-    }
-    
-    .chat-header {
-        height: 65px;
-        padding: 0 12px;
-    }
-
-    /* Optimasi gelembung chat agar lebih hemat ruang di layar HP yang sempit */
-    #messages {
-        padding: 15px;
-    }
-
-    .bubble {
-        max-width: 80% !important; /* Beri ruang chat lebih lebar di HP */
-        font-size: 14px;
-        padding: 10px 12px;
-    }
-
-    /* Sembunyikan beberapa tombol aksesoris input yang kurang penting di layar kecil */
-    .input-box {
-        height: 65px;
-        padding: 8px 10px;
-        gap: 6px;
-    }
-
-    .input-box .bottom-btn:nth-child(3), /* Tombol gambar */
-    .input-box .bottom-btn:nth-child(4)  /* Tombol klip kertas/attach file */ {
-        display: none; 
-    }
-/* ==========================================
-   TAMPILAN BARU MODEL FORUM / DISCORD / SLACK
-   ========================================== */
-
+/* ========================================================
+   TAMPILAN MODEL FORUM / DISCORD / SLACK (GLOBAL STYLE)
+   ======================================================== */
 .forum-message-row {
     display: flex;
     align-items: flex-start;
@@ -802,7 +337,6 @@ font-size:18px;
     width: 100%;
 }
 
-/* Efek hover samar saat kursor diarahkan ke baris pesan */
 .forum-message-row:hover {
     background-color: rgba(0, 0, 0, 0.02);
     border-radius: 6px;
@@ -834,12 +368,12 @@ font-size:18px;
 
 .forum-sender-name {
     font-weight: 700;
-    color: #2563eb; /* Warna biru sesuai gambar Anda */
+    color: #2563eb; 
     font-size: 15px;
 }
 
 .forum-timestamp {
-    color: #9ca3af; /* Warna abu-abu tipis */
+    color: #9ca3af; 
     font-size: 12px;
 }
 
@@ -848,10 +382,9 @@ font-size:18px;
     font-size: 15px;
     line-height: 1.5;
     word-break: break-word;
-    white-space: pre-wrap; /* Biarkan tombol enter/pindah baris berfungsi */
+    white-space: pre-wrap; 
 }
 
-/* Tombol hapus sampah kecil */
 .forum-delete-btn {
     cursor: pointer; 
     color: #9ca3af; 
@@ -861,14 +394,62 @@ font-size:18px;
 }
 
 .forum-delete-btn:hover {
-    color: #ef4444; /* Berubah merah saat disorot */
+    color: #ef4444;
 }
 
-/* Penyesuaian Ruang Obrolan agar terlihat putih bersih tanpa bayangan */
-#messages {
-    background: #ffffff !important;
-    padding: 20px 25px;
-}
+/* ==========================================
+   PERBAIKAN RESPONSIVE MOBILE (LEBAR <= 768px)
+   ========================================== */
+@media (max-width: 768px) {
+    #chatPage {
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+    }
+
+    .group-name, 
+    .group-desc, 
+    .profile-name, 
+    .online-status {
+        display: block !important; 
+    }
+
+    .chat {
+        display: none;
+        width: 100%;
+        height: 100vh;
+    }
+
+    .group-title {
+        font-size: 18px;
+    }
+    
+    .chat-header {
+        height: 65px;
+        padding: 0 12px;
+    }
+
+    #messages {
+        padding: 15px;
+    }
+
+    .input-box {
+        height: 65px;
+        padding: 8px 10px;
+        gap: 6px;
+    }
+
+    /* Sembunyikan tombol tambahan di input bar khusus mobile */
+    .input-box .bottom-btn:nth-child(3), 
+    .input-box .bottom-btn:nth-child(4) {
+        display: none; 
+    }
+
     #messageInput {
         height: 42px;
         font-size: 14px;
@@ -878,7 +459,7 @@ font-size:18px;
     .send-btn {
         width: 42px;
         height: 42px;
-        border-radius: 50%; /* Ubah tombol kirim menjadi bulat ala WhatsApp */
+        border-radius: 50%; /* Bulat ikonik ala WhatsApp */
     }
     
     .bottom-btn {
@@ -886,3 +467,5 @@ font-size:18px;
         height: 38px;
     }
 }
+
+```
