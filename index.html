@@ -1,10 +1,47 @@
-<!-- CHAT -->
-<div id="chatPage" class="chat-page" style="display:none;">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- SIDEBAR -->
+<title>CHAT DDT</title>
+
+<link rel="stylesheet" href="style.css">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+</head>
+
+<body>
+
+<!-- =========================
+     LOGIN
+========================= -->
+<div id="loginPage">
+
+    <div class="login-card">
+
+        <h1>CHAT DDT</h1>
+        <p>Realtime Group Chat</p>
+
+        <button id="loginBtn">
+            <i class="fa-brands fa-google"></i>
+            Login Google
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     CHAT PAGE (MOBILE READY)
+========================= -->
+<div id="chatPage" style="display:none;">
+
+    <!-- SIDEBAR (MOBILE SLIDE) -->
     <aside class="sidebar" id="sidebar">
 
-        <!-- TOP BAR MOBILE CLOSE -->
+        <!-- CLOSE BUTTON (MOBILE ONLY) -->
         <div class="mobile-topbar">
             <span>Chats</span>
             <button id="closeSidebar">
@@ -22,17 +59,22 @@
                      class="profile-avatar">
 
                 <div>
-                    <div id="myName" class="profile-name">Loading...</div>
+
+                    <div id="myName" class="profile-name">
+                        Loading...
+                    </div>
 
                     <div class="online-status">
                         <span class="dot"></span>
                         Online
                     </div>
+
                 </div>
 
             </div>
 
             <div class="profile-actions">
+
                 <button class="icon-btn">
                     <i class="fa-solid fa-gear"></i>
                 </button>
@@ -40,18 +82,32 @@
                 <button id="logoutBtn" class="icon-btn">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
+
             </div>
 
         </div>
 
+        <!-- SEARCH -->
         <div class="search-box">
+
             <i class="fa-solid fa-magnifying-glass"></i>
+
             <input type="text" placeholder="Cari user atau grup...">
+
         </div>
 
-        <button class="groups-btn">Groups</button>
-        <button class="create-group-btn">Buat Grup Baru</button>
+        <!-- BUTTONS -->
+        <button class="groups-btn">
+            <i class="fa-regular fa-message"></i>
+            Groups
+        </button>
 
+        <button class="create-group-btn">
+            <i class="fa-solid fa-plus"></i>
+            Buat Grup Baru
+        </button>
+
+        <!-- LIST -->
         <div id="userList" class="group-list"></div>
 
     </aside>
@@ -60,9 +116,10 @@
     <!-- CHAT AREA -->
     <main class="chat">
 
-        <!-- HEADER (mobile toggle sidebar) -->
+        <!-- HEADER -->
         <div class="chat-header">
 
+            <!-- MOBILE MENU BUTTON -->
             <button id="openSidebar" class="mobile-menu-btn">
                 <i class="fa-solid fa-bars"></i>
             </button>
@@ -73,25 +130,50 @@
                      class="chat-group-avatar">
 
                 <div>
-                    <div id="roomName" class="group-title">Room Chat</div>
-                    <div id="roomMembers" class="group-members">0 anggota</div>
+                    <div id="roomName" class="group-title">
+                        Room Chat
+                    </div>
+
+                    <div id="roomMembers" class="group-members">
+                        0 anggota
+                    </div>
                 </div>
 
+            </div>
+
+            <div class="chat-header-right">
+                <button class="icon-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+
+                <button class="icon-btn">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
 
         </div>
 
 
         <!-- MESSAGES -->
-        <div id="messages" class="messages"></div>
+        <div id="messages"></div>
 
 
         <!-- INPUT -->
         <div class="input-box">
 
+            <button class="bottom-btn">😊</button>
+
             <input type="text"
                    id="messageInput"
                    placeholder="Ketik pesan...">
+
+            <button class="bottom-btn">
+                <i class="fa-regular fa-image"></i>
+            </button>
+
+            <button class="bottom-btn">
+                <i class="fa-solid fa-paperclip"></i>
+            </button>
 
             <button id="sendBtn" class="send-btn">
                 <i class="fa-solid fa-paper-plane"></i>
@@ -102,3 +184,11 @@
     </main>
 
 </div>
+
+
+<script type="module" src="firebase.js"></script>
+<script type="module" src="auth.js"></script>
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
