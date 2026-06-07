@@ -3,10 +3,9 @@ import { doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/fir
 import { auth, db } from "./firebase.js";
 
 const ALLOWED_EMAILS = [
-    "ddtbukudosa@gmail.com",
+    "anthonywian4@gmail.com",
     "anthonyan4556@gmail.com",
-    "muhwahyuim261@gmail.com",
-    "elmanjayahulu8@gmail.com",
+    "yitachi888@gmail.com",
 ];
 
 const loginBtn = document.getElementById("loginBtn");
