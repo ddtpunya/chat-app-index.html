@@ -22,23 +22,33 @@ document.getElementById("messages");
 // =====================
 // 1. KIRIM PESAN
 // =====================
+import { auth, db } from "./firebase.js";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
 sendBtn.addEventListener("click", async () => {
-console.log("TOMBOL DITEKAN");
 
     const text = input.value.trim();
     if (!text) return;
 
     await addDoc(collection(db, "messages"), {
+
         text: text,
+
+        name: auth.currentUser.displayName,
+        email: auth.currentUser.email,
+        photo: auth.currentUser.photoURL,
+
         createdAt: serverTimestamp()
+
     });
 
     input.value = "";
 });
-const q = query(
-    collection(db, "messages"),
-    orderBy("createdAt")
-);
 
 
 // =====================
