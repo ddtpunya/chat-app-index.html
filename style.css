@@ -1,71 +1,62 @@
 #messages {
   padding: 20px;
+  background: #f3f4f6;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  background: #f3f4f6;
 }
 
-/* tiap grup message */
+/* tiap item chat */
 .msg-item {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
   padding: 14px 10px;
   border-bottom: 1px solid #e5e7eb;
 }
 
 /* avatar */
-.avatar {
-  width: 40px;
-  height: 40px;
+.avatar img {
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: #ff6b00;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
 }
 
-/* content */
+/* isi */
 .msg-content {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* header row */
+/* header */
 .msg-header {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* name */
+/* nama */
 .name {
   font-weight: 600;
   color: #1d4ed8;
-  font-size: 14px;
 }
 
-/* time */
+/* waktu */
 .time {
   font-size: 12px;
-  color: gray;
+  color: #6b7280;
 }
 
-/* badge "3 pesan" */
+/* badge */
 .badge {
   margin-left: auto;
-  background: #e0f2fe;
-  color: #0284c7;
   font-size: 11px;
+  background: #dbeafe;
+  color: #2563eb;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
 }
 
-/* message text */
+/* isi text */
 .msg-text {
   margin-top: 4px;
   font-size: 14px;
