@@ -1,25 +1,41 @@
+import { db } from "./firebase.js";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
 const sendBtn =
 document.getElementById("sendBtn");
 
 const input =
 document.getElementById("messageInput");
 
-const messages =
-document.getElementById("messages");
-
-sendBtn.addEventListener("click",()=>{
+sendBtn.addEventListener("click", async () => {
 
     const text = input.value.trim();
 
-    if(!text) return;
+    if (!text) return;
 
-    const div =
-    document.createElement("div");
+    try {
 
-    div.textContent = text;
+        await addDoc(
+            collection(db, "messages"),
+            {
+                text: text,
+                createdAt: serverTimestamp()
+            }
+        );
 
-    messages.appendChild(div);
+        console.log("Pesan tersimpan");
 
-    input.value = "";
+        input.value = "";
+
+    } catch(err) {
+
+        console.error(err);
+
+    }
 
 });
