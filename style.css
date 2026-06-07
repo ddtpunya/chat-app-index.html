@@ -293,15 +293,29 @@ padding:25px;
 
 .message{
 display:flex;
+align-items:flex-end; /* 🔥 kunci utama biar sejajar bawah bubble */
 gap:10px;
 margin-bottom:20px;
-align-items:flex-start;
+width:100%;
 }
 
+/* bubble jangan full terlalu liar */
+.bubble{
+background:white;
+padding:12px 15px;
+border-radius:12px;
+max-width:60%;   /* 🔥 penting: jangan 700px */
+box-shadow:0 2px 8px rgba(0,0,0,.05);
+word-wrap:break-word;
+}
+
+/* avatar harus stabil */
 .message img{
 width:40px;
 height:40px;
 border-radius:50%;
+object-fit:cover;
+flex-shrink:0; /* 🔥 jangan sampai mengecil / turun */
 }
 
 .bubble{
