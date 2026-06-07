@@ -77,7 +77,7 @@ if (registerBtn) {
       });
 
       alert("Register berhasil!");
-      window.location.href = "chat.html";
+      window.location.href = "index.html";
     } catch (err) {
       alert(err.message);
     }
@@ -97,7 +97,7 @@ if (loginBtn) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       alert("Login berhasil!");
-      window.location.href = "chat.html";
+      window.location.href = "index.html";
     } catch (err) {
       alert(err.message);
     }
@@ -116,14 +116,14 @@ if (logoutBtn) {
 
 onAuthStateChanged(auth, async (user) => {
   const isLoginPage = window.location.pathname.includes("index.html");
-  const isChatPage = window.location.pathname.includes("chat.html");
+  const isChatPage = window.location.pathname.includes("index.html");
 
   if (!user && isChatPage) {
     window.location.href = "index.html";
   }
 
   if (user && isLoginPage) {
-    window.location.href = "chat.html";
+    window.location.href = "index.html";
   }
 
   // optional: ambil data user
