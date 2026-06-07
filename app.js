@@ -35,7 +35,7 @@ if (input && sendBtn) {
 
 
 // =========================
-// SCROLL FUNCTION (FIXED)
+// AUTO SCROLL (FIXED)
 // =========================
 function scrollToBottom() {
     if (!messages) return;
@@ -117,6 +117,7 @@ onSnapshot(q, (snapshot) => {
 
         const data = doc.data();
 
+        // filter chat
         if (data.chatId !== currentChatId && data.chatId !== "global") return;
 
         const div = document.createElement("div");
@@ -125,6 +126,8 @@ onSnapshot(q, (snapshot) => {
         div.style.alignItems = "center";
         div.style.gap = "10px";
         div.style.margin = "10px 0";
+
+        // 🔥 semua rata kiri
         div.style.justifyContent = "flex-start";
 
         div.innerHTML = `
@@ -145,7 +148,7 @@ onSnapshot(q, (snapshot) => {
         messages.appendChild(div);
     });
 
-    // 🔥 WAJIB scroll setelah render selesai
+    // 🔥 auto scroll setiap update realtime
     scrollToBottom();
 
 });
