@@ -1,3 +1,4 @@
+
 import { auth, db } from "./firebase.js";
 
 import {
@@ -15,6 +16,12 @@ const messages = document.getElementById("messages");
 
 
 // =========================
+// CHAT STATE
+// =========================
+let currentChatId = "global";
+
+
+// =========================
 // ENTER = SEND
 // =========================
 if (input && sendBtn) {
@@ -28,16 +35,14 @@ if (input && sendBtn) {
 
 
 // =========================
-// CHAT STATE
-// =========================
-let currentChatId = "global";
-
-
-// =========================
-// AUTO SCROLL BOTTOM
+// SCROLL FUNCTION (FIXED)
 // =========================
 function scrollToBottom() {
-    messages.scrollTop = messages.scrollHeight;
+    if (!messages) return;
+
+    requestAnimationFrame(() => {
+        messages.scrollTop = messages.scrollHeight;
+    });
 }
 
 
@@ -69,8 +74,8 @@ sendBtn.addEventListener("click", async () => {
 
         input.value = "";
 
-        // 🔥 AUTO SCROLL setelah kirim
-        setTimeout(scrollToBottom, 100);
+        // 🔥 scroll setelah kirim
+        scrollToBottom();
 
     } catch (err) {
         console.error("SEND ERROR:", err);
@@ -79,7 +84,7 @@ sendBtn.addEventListener("click", async () => {
 
 
 // =========================
-// OPEN CHAT
+// OPEN CHAT (PRIVATE CHAT)
 // =========================
 window.openChat = function (otherUser) {
 
@@ -140,7 +145,7 @@ onSnapshot(q, (snapshot) => {
         messages.appendChild(div);
     });
 
-    // 🔥 AUTO SCROLL setiap ada pesan baru
-    setTimeout(scrollToBottom, 100);
+    // 🔥 WAJIB scroll setelah render selesai
+    scrollToBottom();
 
 });
