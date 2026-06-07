@@ -34,7 +34,18 @@ if (closeSidebar) {
     sidebar.classList.remove("active");
   };
 }
+function formatTime(timestamp) {
+  if (!timestamp?.toDate) return "";
 
+  const d = timestamp.toDate();
+
+  return d.toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
 /* ======================
    AUTO SCROLL
 ====================== */
