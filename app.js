@@ -137,18 +137,18 @@ onSnapshot(q, (snapshot) => {
     `;
 
     row.innerHTML = isMe
-  ? `
-    <div class="msg-right">
-      ${bubble.outerHTML}
-      <img src="${photo}" class="avatar">
-    </div>
-  `
-  : `
-    <div class="msg-left">
-      <img src="${photo}" class="avatar">
-      ${bubble.outerHTML}
-    </div>
-  `;
+      ? `
+        <div class="msg-right">
+          ${bubble.outerHTML}
+          <img src="${photo}" class="avatar">
+        </div>
+      `
+      : `
+        <div class="msg-left">
+          <img src="${photo}" class="avatar">
+          ${bubble.outerHTML}
+        </div>
+      `;
 
     messages.appendChild(row);
 
