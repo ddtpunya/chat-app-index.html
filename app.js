@@ -1,11 +1,10 @@
-
 import { auth, db } from "./firebase.js";
-
 import {
   collection,
   addDoc,
   serverTimestamp,
   query,
+  where,
   orderBy,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
@@ -13,13 +12,10 @@ import {
 const sendBtn = document.getElementById("sendBtn");
 const input = document.getElementById("messageInput");
 const messages = document.getElementById("messages");
+const roomName = document.getElementById("roomName");
 
-
-// =========================
-// CHAT STATE
-// =========================
 let currentChatId = "global";
-
+let unsubscribeChat = null; // Menyimpan fungsi untuk mematikan listener lama
 
 // =========================
 // ENTER = SEND
@@ -33,29 +29,24 @@ if (input && sendBtn) {
     });
 }
 
-
 // =========================
-// AUTO SCROLL (FIXED)
+// AUTO SCROLL
 // =========================
 function scrollToBottom() {
     if (!messages) return;
-
     requestAnimationFrame(() => {
         messages.scrollTop = messages.scrollHeight;
     });
 }
 
-
 // =========================
 // SEND MESSAGE
 // =========================
 sendBtn.addEventListener("click", async () => {
-
     const text = input.value.trim();
     if (!text) return;
 
     const user = auth.currentUser;
-
     if (!user) {
         alert("Belum login");
         return;
@@ -73,82 +64,85 @@ sendBtn.addEventListener("click", async () => {
         });
 
         input.value = "";
-
-        // 🔥 scroll setelah kirim
         scrollToBottom();
-
     } catch (err) {
         console.error("SEND ERROR:", err);
     }
 });
 
+// =========================
+// LOAD MESSAGES (REALTIME & FILTERED)
+// =========================
+function listenToChat(chatId) {
+    // Matikan listener sebelumnya jika ada agar tidak tumpang tindih
+    if (unsubscribeChat) unsubscribeChat();
+
+    // Gunakan query WHERE langsung ke Firestore agar aman dan efisien
+    const q = query(
+        collection(db, "messages"),
+        where("chatId", "==", chatId),
+        orderBy("createdAt")
+    );
+
+    unsubscribeChat = onSnapshot(q, (snapshot) => {
+        messages.innerHTML = "";
+
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const me = auth.currentUser;
+            if (!me) return;
+
+            // Tentukan apakah ini pesan kita atau orang lain
+            const isMe = data.uid === me.uid;
+
+            const div = document.createElement("div");
+            div.className = "message";
+            
+            // Atur posisi: Jika pesan kita, taruh di kanan. Jika orang lain, di kiri.
+            div.style.justifyContent = isMe ? "flex-end" : "flex-start";
+
+            // Gunakan struktur CSS class yang sudah Anda buat di style.css
+            div.innerHTML = `
+                ${!isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar">` : ''}
+                <div class="bubble" style="background: ${isMe ? '#d9fdd3' : 'white'}; border-radius: ${isMe ? '12px 12px 0 12px' : '12px 12px 12px 0'};">
+                    <div class="sender" style="color: ${isMe ? '#059669' : '#1d4ed8'}">${isMe ? 'Anda' : data.name}</div>
+                    <div>${data.text}</div>
+                </div>
+                ${isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar" style="margin-left: 10px;">` : ''}
+            `;
+
+            messages.appendChild(div);
+        });
+
+        scrollToBottom();
+    });
+}
 
 // =========================
-// OPEN CHAT (PRIVATE CHAT)
+// OPEN CHAT (PRIVATE & GLOBAL CHAT)
 // =========================
 window.openChat = function (otherUser) {
-
     const me = auth.currentUser;
-
     if (!me) return;
 
-    currentChatId =
-        me.uid < otherUser.uid
-        ? me.uid + "_" + otherUser.uid
-        : otherUser.uid + "_" + me.uid;
+    if (otherUser === "global") {
+        currentChatId = "global";
+        if (roomName) roomName.innerText = "Room Chat Global";
+    } else {
+        currentChatId = me.uid < otherUser.uid 
+            ? me.uid + "_" + otherUser.uid 
+            : otherUser.uid + "_" + me.uid;
+        
+        if (roomName) roomName.innerText = otherUser.name;
+    }
 
     console.log("OPEN CHAT:", currentChatId);
+    listenToChat(currentChatId); // Muat chat yang sesuai
 };
 
-
-// =========================
-// REALTIME CHAT
-// =========================
-const q = query(
-    collection(db, "messages"),
-    orderBy("createdAt")
-);
-
-onSnapshot(q, (snapshot) => {
-
-    messages.innerHTML = "";
-
-    snapshot.forEach((doc) => {
-
-        const data = doc.data();
-
-        // filter chat
-        if (data.chatId !== currentChatId && data.chatId !== "global") return;
-
-        const div = document.createElement("div");
-
-        div.style.display = "flex";
-        div.style.alignItems = "center";
-        div.style.gap = "10px";
-        div.style.margin = "10px 0";
-
-        // 🔥 semua rata kiri
-        div.style.justifyContent = "flex-start";
-
-        div.innerHTML = `
-            <img src="${data.photo}" style="width:35px;height:35px;border-radius:50%;">
-
-            <div style="
-                background:#f1f1f1;
-                padding:8px 12px;
-                border-radius:10px;
-                max-width:60%;
-                word-wrap: break-word;
-            ">
-                <b>${data.name}</b><br>
-                ${data.text}
-            </div>
-        `;
-
-        messages.appendChild(div);
-    });
-
-    // 🔥 auto scroll setiap update realtime
-    scrollToBottom();
-
+// Inisialisasi awal saat pertama kali dimuat
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        window.openChat("global");
+    }
 });
