@@ -1,83 +1,144 @@
-body{
-    margin:0;
-    font-family:Arial, sans-serif;
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
 }
 
-#loginPage{
-    height:100vh;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
+/* ===================== */
+/* LOGIN PAGE */
+/* ===================== */
+#loginPage {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
-#loginBtn{
-    padding:12px 20px;
-    cursor:pointer;
+#loginBtn {
+    padding: 12px 20px;
+    cursor: pointer;
+    border: none;
+    background: #1877f2;
+    color: white;
+    border-radius: 8px;
 }
 
-#chatPage{
-    display:flex;
-    height:100vh;
+/* ===================== */
+/* CHAT LAYOUT */
+/* ===================== */
+#chatPage {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
 
-.sidebar{
-    width:250px;
-    background:#eef2ff;
-    padding:20px;
+/* ===================== */
+/* SIDEBAR */
+/* ===================== */
+.sidebar {
+    width: 280px;
+    background: #ffffff;
+    border-right: 1px solid #ddd;
+    padding: 15px;
+    overflow-y: auto;
 }
 
-.sidebar ul{
-    list-style:none;
-    padding:0;
+.sidebar h3 {
+    margin-top: 0;
 }
 
-.sidebar li{
-    padding:10px;
-    cursor:pointer;
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.chat{
-    flex:1;
-    display:flex;
-    flex-direction:column;
+.sidebar li {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.header{
-    padding:20px;
-    border-bottom:1px solid #ddd;
+.sidebar li:hover {
+    background: #f0f0f0;
 }
 
-#messages{
-    flex:1;
-    padding:20px;
-    overflow-y:auto;
+/* ===================== */
+/* CHAT AREA */
+/* ===================== */
+.chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #e5ddd5;
 }
 
-.input-box{
-    display:flex;
-    padding:10px;
-    border-top:1px solid #ddd;
+/* HEADER */
+.header {
+    padding: 15px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
 }
 
-.input-box input{
-    flex:1;
-    padding:10px;
+/* ===================== */
+/* MESSAGES */
+/* ===================== */
+#messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
-.input-box button{
-    margin-left:10px;
-    padding:10px 20px;
-}
-
+/* BUBBLE CHAT */
 #messages div {
-    padding:10px;
-    margin-bottom:10px;
-    background:#f5f5f5;
-    border-radius:8px;
+    max-width: 60%;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
+/* ===================== */
+/* INPUT */
+/* ===================== */
+.input-box {
+    display: flex;
+    padding: 10px;
+    background: white;
+    border-top: 1px solid #ddd;
+}
+
+.input-box input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+}
+
+.input-box button {
+    margin-left: 10px;
+    padding: 10px 18px;
+    border: none;
+    background: #1877f2;
+    color: white;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+/* ===================== */
+/* TIME TEXT */
+/* ===================== */
 small {
-    color:gray;
-    font-size:11px;
+    color: gray;
+    font-size: 11px;
 }
