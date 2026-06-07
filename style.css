@@ -289,91 +289,19 @@ overflow-y:auto;
 padding:25px;
 }
 
-/* MESSAGE */
+/* MESSAGE (SUDAH DIEDIT) */
 
 .message{
 display:flex;
-gap:10px;
-margin-bottom:20px;
-align-items:flex-start;
+gap:12px;
+margin-bottom:12px;
+align-items:center; /* Membuat isi teks sejajar di tengah tinggi foto profil */
+width:100%;
 }
 
 .message img{
-width:40px;
-height:40px;
+width:36px;
+height:36px;
 border-radius:50%;
-}
-
-.bubble{
-background:white;
-padding:12px 15px;
-border-radius:12px;
-max-width:700px;
-box-shadow:0 2px 8px rgba(0,0,0,.05);
-}
-
-.sender{
-font-weight:700;
-margin-bottom:5px;
-color:#1d4ed8;
-}
-
-/* INPUT */
-
-.input-box{
-height:75px;
-background:white;
-border-top:1px solid #e5e7eb;
-display:flex;
-align-items:center;
-gap:10px;
-padding:10px 15px;
-}
-
-#messageInput{
-flex:1;
-height:48px;
-border:2px solid #2563eb;
-border-radius:15px;
-padding:0 15px;
-outline:none;
-font-size:15px;
-}
-
-.bottom-btn{
-width:42px;
-height:42px;
-border:none;
-cursor:pointer;
-border-radius:10px;
-background:#2563eb;
-color:white;
-}
-
-.send-btn{
-width:48px;
-height:48px;
-border:none;
-cursor:pointer;
-border-radius:12px;
-background:#2563eb;
-color:white;
-font-size:18px;
-}
-
-/* MOBILE */
-
-@media(max-width:768px){
-
-.sidebar{
-width:100px;
-}
-
-.group-name,
-.group-desc,
-.profile-name,
-.online-status{
-display:none;
-}
-
-}
+object-fit:cover;
+flex-shrink:0
