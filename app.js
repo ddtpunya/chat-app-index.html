@@ -13,10 +13,6 @@ const sendBtn = document.getElementById("sendBtn");
 const input = document.getElementById("messageInput");
 const messages = document.getElementById("messages");
 
-
-// =====================
-// KIRIM PESAN
-// =====================
 sendBtn.addEventListener("click", async () => {
 
     const text = input.value.trim();
@@ -29,26 +25,17 @@ sendBtn.addEventListener("click", async () => {
         return;
     }
 
-    try {
-        await addDoc(collection(db, "messages"), {
-            text,
-            name: user.displayName || user.email.split("@")[0],
-            email: user.email,
-            photo: user.photoURL,
-            createdAt: serverTimestamp()
-        });
+    await addDoc(collection(db, "messages"), {
+        text,
+        name: user.displayName || user.email.split("@")[0],
+        email: user.email,
+        photo: user.photoURL,
+        createdAt: serverTimestamp()
+    });
 
-        input.value = "";
-
-    } catch (e) {
-        console.error("ERROR:", e);
-    }
+    input.value = "";
 });
 
-
-// =====================
-// REALTIME CHAT
-// =====================
 const q = query(
     collection(db, "messages"),
     orderBy("createdAt")
