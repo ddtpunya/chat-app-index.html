@@ -1,210 +1,105 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>CHAT DDT</title>
-
-<link rel="stylesheet" href="style.css">
-
-<link
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-rel="stylesheet"
-/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHAT DDT</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
 </head>
-
 <body>
 
-<!-- LOGIN -->
 <div id="loginPage">
-
     <div class="login-card">
-
         <h1>CHAT DDT</h1>
-
         <p>Realtime Group Chat</p>
-
         <button id="loginBtn">
             <i class="fa-brands fa-google"></i>
             Login Google
         </button>
-
     </div>
-
 </div>
 
-<!-- CHAT -->
 <div id="chatPage" style="display:none;">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
 
-        <!-- USER CARD -->
         <div class="profile-card">
-
             <div class="profile-left">
-
-                <img
-                    id="myPhoto"
-                    src="https://ui-avatars.com/api/?name=DDT"
-                    class="profile-avatar"
-                >
-
+                <img id="myPhoto" src="https://ui-avatars.com/api/?name=DDT" class="profile-avatar" alt="My Profile">
                 <div>
-
-                    <div id="myName" class="profile-name">
-                        Loading...
-                    </div>
-
+                    <div id="myName" class="profile-name">Loading...</div>
                     <div class="online-status">
-
                         <span class="dot"></span>
-
                         Online
-
                     </div>
-
                 </div>
-
             </div>
-
             <div class="profile-actions">
-
                 <button class="icon-btn">
                     <i class="fa-solid fa-gear"></i>
                 </button>
-
-                <button
-                    id="logoutBtn"
-                    class="icon-btn"
-                >
+                <button id="logoutBtn" class="icon-btn">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
-
             </div>
-
         </div>
 
-        <!-- SEARCH -->
         <div class="search-box">
-
             <i class="fa-solid fa-magnifying-glass"></i>
-
-            <input
-                type="text"
-                placeholder="Cari user atau grup..."
-            >
-
+            <input type="text" placeholder="Cari user atau grup...">
         </div>
 
-        <!-- GROUP BUTTON -->
         <button class="groups-btn">
-
             <i class="fa-regular fa-message"></i>
-
             Groups
-
         </button>
 
-        <!-- CREATE GROUP -->
         <button class="create-group-btn">
-
             <i class="fa-solid fa-plus"></i>
-
             Buat Grup Baru
-
         </button>
 
-        <!-- GROUP LIST -->
         <div id="userList" class="group-list">
-
-            <!-- Firebase Render -->
-
-        </div>
+            </div>
 
     </aside>
 
-    <!-- CHAT -->
     <main class="chat">
 
-        <!-- HEADER -->
         <div class="chat-header">
-
             <div class="chat-header-left">
-
-                <img
-                    src="https://ui-avatars.com/api/?name=DDT"
-                    class="chat-group-avatar"
-                >
-
+                <img src="https://ui-avatars.com/api/?name=DDT" class="chat-group-avatar" alt="Group Avatar">
                 <div>
-
-                    <div
-                        class="group-title"
-                        id="roomName"
-                    >
-                        Room Chat
-                    </div>
-
-                    <div
-                        class="group-members"
-                        id="roomMembers"
-                    >
-                        0 anggota
-                    </div>
-
+                    <div class="group-title" id="roomName">Room Chat</div>
+                    <div class="group-members" id="roomMembers">0 anggota</div>
                 </div>
-
             </div>
-
             <div class="chat-header-right">
-
                 <button class="icon-btn">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
-
                 <button class="icon-btn">
                     <i class="fa-solid fa-gear"></i>
                 </button>
+            </div>
+        </div>
 
+        <div id="messages">
             </div>
 
-        </div>
-
-        <!-- CHAT BODY -->
-        <div id="messages">
-
-        </div>
-
-        <!-- INPUT -->
         <div class="input-box">
-
-            <button class="bottom-btn">
-                😊
-            </button>
-
-            <input
-                type="text"
-                id="messageInput"
-                placeholder="Ketik pesan..."
-            >
-
+            <button class="bottom-btn">😊</button>
+            <input type="text" id="messageInput" placeholder="Ketik pesan...">
             <button class="bottom-btn">
                 <i class="fa-regular fa-image"></i>
             </button>
-
             <button class="bottom-btn">
                 <i class="fa-solid fa-paperclip"></i>
             </button>
-
-            <button
-                id="sendBtn"
-                class="send-btn"
-            >
+            <button id="sendBtn" class="send-btn">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
-
         </div>
 
     </main>
