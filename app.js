@@ -14,6 +14,15 @@ const input = document.getElementById("messageInput");
 const messages = document.getElementById("messages");
 const userList = document.getElementById("userList");
 
+
+input.addEventListener("keydown", (e) => {
+
+    if (e.key === "Enter") {
+        e.preventDefault();
+        sendBtn.click();
+    }
+
+});
 // =========================
 // CURRENT CHAT STATE
 // =========================
