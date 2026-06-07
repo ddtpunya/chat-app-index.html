@@ -34,3 +34,29 @@ sendBtn.addEventListener("click", async () => {
 
     input.value = "";
 });
+const q = query(
+    collection(db, "messages"),
+    orderBy("createdAt")
+);
+
+
+// =====================
+// 2. REALTIME LISTENER
+// =====================
+onSnapshot(q, (snapshot) => {
+
+    messages.innerHTML = "";
+
+    snapshot.forEach((doc) => {
+
+        const data = doc.data();
+
+        const div = document.createElement("div");
+
+        div.textContent = data.text;
+
+        messages.appendChild(div);
+
+    });
+
+});
