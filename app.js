@@ -32,37 +32,33 @@ import {
 
 sendBtn.addEventListener("click", async () => {
 
+    console.log("KLIK KIRIM");
+
     const text = input.value.trim();
+    console.log("TEXT:", text);
+
     if (!text) return;
 
     const user = auth.currentUser;
+    console.log("USER:", user);
 
-    await addDoc(collection(db, "messages"), {
-        text: text,
-        name: user.displayName || user.email.split("@")[0],
-        email: user.email,
-        photo: user.photoURL,
-        createdAt: serverTimestamp()
-    });
+    try {
+        const ref = await addDoc(collection(db, "messages"), {
+            text,
+            name: user.displayName || user.email.split("@")[0],
+            email: user.email,
+            photo: user.photoURL,
+            createdAt: serverTimestamp()
+        });
 
-    input.value = "";
-});
+        console.log("SUKSES SIMPAN:", ref.id);
 
-    await addDoc(collection(db, "messages"), {
-
-        text: text,
-
-        name: auth.currentUser.displayName,
-        email: auth.currentUser.email,
-        photo: auth.currentUser.photoURL,
-
-        createdAt: serverTimestamp()
-
-    });
+    } catch (e) {
+        console.error("ERROR FIRESTORE:", e);
+    }
 
     input.value = "";
 });
-
 
 // =====================
 // 2. REALTIME LISTENER
