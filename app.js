@@ -40,11 +40,19 @@ let currentChatId = "global";
    FUNGSI AUTO SCROLL KEBAWAH
 ========================= */
 function scrollBottom() {
+  if (!messages) return;
+
+  // 1. Eksekusi instan saat teks masuk
+  messages.scrollTop = messages.scrollHeight;
+
+  // 2. Eksekusi cadangan dengan jeda waktu untuk menunggu gambar avatar selesai dimuat
   setTimeout(() => {
-    if (messages) {
-      messages.scrollTop = messages.scrollHeight;
-    }
-  }, 50);
+    messages.scrollTop = messages.scrollHeight;
+  }, 100);
+
+  setTimeout(() => {
+    messages.scrollTop = messages.scrollHeight;
+  }, 300); // Penjagaan ekstra jika koneksi internet agak lambat saat memuat gambar
 }
 
 /* =========================
