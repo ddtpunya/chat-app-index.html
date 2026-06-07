@@ -1,35 +1,22 @@
-import { db } from "./firebase.js";
-
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  onSnapshot,
-  query,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
-
-const sendBtn =
-document.getElementById("sendBtn");
-
-const input =
-document.getElementById("messageInput");
-
-const messages =
-document.getElementById("messages");
-
-
-// =====================
-// 1. KIRIM PESAN
-// =====================
 import { auth, db } from "./firebase.js";
 
 import {
   collection,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  query,
+  orderBy,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+const sendBtn = document.getElementById("sendBtn");
+const input = document.getElementById("messageInput");
+const messages = document.getElementById("messages");
+
+
+// =====================
+// 1. KIRIM PESAN
+// =====================
 sendBtn.addEventListener("click", async () => {
 
     console.log("KLIK KIRIM");
@@ -41,6 +28,11 @@ sendBtn.addEventListener("click", async () => {
 
     const user = auth.currentUser;
     console.log("USER:", user);
+
+    if (!user) {
+        alert("User belum login");
+        return;
+    }
 
     try {
         const ref = await addDoc(collection(db, "messages"), {
@@ -60,16 +52,10 @@ sendBtn.addEventListener("click", async () => {
     input.value = "";
 });
 
-// =====================
-// 2. REALTIME LISTENER
-// =====================
-import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+// =====================
+// 2. REALTIME CHAT
+// =====================
 const q = query(
     collection(db, "messages"),
     orderBy("createdAt")
