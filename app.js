@@ -26,11 +26,12 @@ sendBtn.addEventListener("click", async () => {
     }
 
     await addDoc(collection(db, "messages"), {
-        text,
-        name: user.displayName || user.email.split("@")[0],
-        email: user.email,
-        photo: user.photoURL,
-        createdAt: serverTimestamp()
+    text,
+    uid: user.uid,
+    name: user.displayName || user.email.split("@")[0],
+    email: user.email,
+    photo: user.photoURL,
+    createdAt: serverTimestamp()
     });
 
     input.value = "";
@@ -49,21 +50,23 @@ onSnapshot(q, (snapshot) => {
 
         const data = doc.data();
 
-        const time = data.createdAt
-            ? new Date(data.createdAt.seconds * 1000).toLocaleString()
-            : "";
-
         const div = document.createElement("div");
 
+        div.style.display = "flex";
+        div.style.alignItems = "center";
+        div.style.gap = "10px";
+        div.style.margin = "10px 0";
+
         div.innerHTML = `
-            <b>${data.name || data.email}</b><br>
-            ${data.text}<br>
-            <small>${time}</small>
-            <hr>
+            <img src="${data.photo}" 
+                 style="width:35px;height:35px;border-radius:50%;">
+            <div>
+                <b>${data.name}</b><br>
+                ${data.text}
+            </div>
         `;
 
         messages.appendChild(div);
-
     });
 
 });
