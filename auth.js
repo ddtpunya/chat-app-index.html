@@ -16,15 +16,9 @@ const ALLOWED_EMAILS = [
 
 ];
 
-const loginBtn =
-document.getElementById("loginBtn");
+const loginBtn = document.getElementById("loginBtn");
 
-loginBtn.addEventListener("click", async ()=>{
-
-    const provider =
-    new GoogleAuthProvider();
-
-    loginBtn.addEventListener("click", async () => {
+loginBtn.addEventListener("click", async () => {
     try {
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
@@ -32,8 +26,6 @@ loginBtn.addEventListener("click", async ()=>{
         console.log("Login error:", error);
         alert(error.message);
     }
-});
-
 });
 
 onAuthStateChanged(auth,(user)=>{
