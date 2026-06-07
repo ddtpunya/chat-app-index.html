@@ -569,12 +569,15 @@ gap:10px;
 
 
 
-#messages {
-  flex: 1;
-  overflow-y: auto; /* WAJIB: Agar scrollbar muncul saat chat penuh */
-  padding: 25px;
-  display: flex;
-  flex-direction: column; /* Menyusun pesan dari atas ke bawah */
+#messages{
+
+flex:1;
+
+overflow-y:auto;
+
+padding:25px;
+
+}
 
 
 
