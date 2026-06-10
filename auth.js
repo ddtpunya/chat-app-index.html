@@ -11,6 +11,7 @@ const ALLOWED_EMAILS = [
     "dikosy446@gmail.com",
     "rickyrichardo88.smb88@gmail.com",
     "elmanjayahulu8@gmail.com",
+    "muhwahyuim261@gmail.com",
 ];
 
 const loginBtn = document.getElementById("loginBtn");
