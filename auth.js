@@ -7,7 +7,6 @@ const ALLOWED_EMAILS = [
     "anthonyan4556@gmail.com",
     "yitachi888@gmail.com",
     "jasonpurlowyj@gmail.com",
-    "ferlija.smb888@gmail.com",
     "dikosy446@gmail.com",
     "rickyrichardo88.smb88@gmail.com",
     "elmanjayahulu8@gmail.com",
