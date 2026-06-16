@@ -5,7 +5,6 @@ import { auth, db } from "./firebase.js";
 const ALLOWED_EMAILS = [
     "anthonywian4@gmail.com",
     "anthonyan4556@gmail.com",
-    "yitachi888@gmail.com",
     "jasonpurlowyj@gmail.com",
     "dikosy446@gmail.com",
     "rickyrichardo88.smb88@gmail.com",
