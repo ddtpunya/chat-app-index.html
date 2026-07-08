@@ -5,13 +5,7 @@ import { auth, db } from "./firebase.js";
 const ALLOWED_EMAILS = [
     "anthonywian4@gmail.com",
     "anthonyan4556@gmail.com",
-    "jasonpurlowyj@gmail.com",
-    "dikosy446@gmail.com",
-    "rickyrichardo88.smb88@gmail.com",
-    "elmanjayahulu8@gmail.com",
-    "muhwahyuim261@gmail.com",
-    "andryysmb88@gmail.com",
-    "andrechirsim587@gmail.com",
+    "verensmb@gmail.com",
 ];
 
 const loginBtn = document.getElementById("loginBtn");
