@@ -5,7 +5,6 @@ import { auth, db } from "./firebase.js";
 const ALLOWED_EMAILS = [
     "anthonywian4@gmail.com",
     "anthonyan4556@gmail.com",
-    "verensmb@gmail.com",
 ];
 
 const loginBtn = document.getElementById("loginBtn");
