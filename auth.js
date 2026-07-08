@@ -3,7 +3,7 @@ import { doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/fir
 import { auth, db } from "./firebase.js";
 
 const ALLOWED_EMAILS = [
-    "anthonywian4@gmail.com",
+    "verensmb@gmail.com",
     "anthonyan4556@gmail.com",
 ];
 
