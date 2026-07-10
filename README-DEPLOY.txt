@@ -1,6 +1,15 @@
-CHAT DDT - Redirect Fix
+CHAT DDT - Emoji Hide Fix
 
-Upload semua file di folder ini langsung ke root repository:
+Perbaikan:
+- Tombol emotikon sekarang berfungsi sebagai buka/tutup.
+- Klik atau sentuh area di luar panel akan menutup panel.
+- Tombol Escape menutup panel.
+- Memilih emotikon menutup panel otomatis.
+- Membuka upload gambar/file menutup panel.
+- CSS memastikan atribut hidden benar-benar menyembunyikan panel di mobile.
+- Cache-buster versi: 20260711-emoji-hide-fix-2
+
+Upload semua file berikut langsung ke root repository GitHub:
 - index.html
 - chat.html
 - style.css
@@ -9,12 +18,4 @@ Upload semua file di folder ini langsung ke root repository:
 - firebase.js
 - storage.rules
 
-Jangan upload folder CHAT-DDT-redirect-fixed sebagai subfolder.
-
-Setelah GitHub Pages selesai deploy:
-1. Buka https://ddtpunya.github.io/chat-app-index.html/chat.html sekali.
-2. Halaman akan menghapus service worker lama untuk project ini dan kembali ke halaman utama.
-3. Lalu buka https://ddtpunya.github.io/chat-app-index.html/
-4. Lakukan hard refresh.
-
-Versi cache-buster: 20260711-redirect-fix-1
+Setelah GitHub Pages selesai deploy, lakukan hard refresh.

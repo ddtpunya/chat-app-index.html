@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260711-redirect-fix-1";
+import { auth, db, storage } from "./firebase.js?v=20260711-emoji-hide-fix-2";
 import {
     collection,
     addDoc,
@@ -207,20 +207,66 @@ if (emojiPicker) {
         button.setAttribute("aria-label", `Emotikon ${emoji}`);
         button.addEventListener("click", () => {
             insertAtCursor(input, emoji);
-            emojiPicker.hidden = true;
+            closeEmojiPicker();
         });
         emojiPicker.appendChild(button);
     });
 }
 
+function setEmojiPickerOpen(open) {
+    if (!emojiPicker) return;
+
+    emojiPicker.hidden = !open;
+    emojiPicker.classList.toggle("is-open", open);
+    emojiBtn?.setAttribute("aria-expanded", String(open));
+}
+
+function closeEmojiPicker() {
+    setEmojiPickerOpen(false);
+}
+
+function toggleEmojiPicker() {
+    setEmojiPickerOpen(Boolean(emojiPicker?.hidden));
+}
+
+emojiBtn?.setAttribute("aria-expanded", "false");
+emojiBtn?.setAttribute("aria-controls", "emojiPicker");
+
 emojiBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
     event.stopPropagation();
-    if (emojiPicker) emojiPicker.hidden = !emojiPicker.hidden;
+    toggleEmojiPicker();
 });
 
-emojiPicker?.addEventListener("click", (event) => event.stopPropagation());
-document.addEventListener("click", () => {
-    if (emojiPicker) emojiPicker.hidden = true;
+// Menutup panel saat menyentuh/klik area mana pun di luar tombol dan panel.
+document.addEventListener("pointerdown", (event) => {
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+
+    const clickedButton = emojiBtn?.contains(target);
+    const clickedPicker = emojiPicker?.contains(target);
+
+    if (!clickedButton && !clickedPicker) {
+        closeEmojiPicker();
+    }
+}, true);
+
+// Fallback untuk browser lama yang belum konsisten mendukung pointer events.
+document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+
+    if (!emojiBtn?.contains(target) && !emojiPicker?.contains(target)) {
+        closeEmojiPicker();
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && emojiPicker && !emojiPicker.hidden) {
+        event.preventDefault();
+        closeEmojiPicker();
+        input?.focus();
+    }
 });
 
 // =========================
@@ -383,8 +429,14 @@ async function uploadAndSend(file, imageOnly = false) {
     }
 }
 
-imageBtn?.addEventListener("click", () => imageInput?.click());
-fileBtn?.addEventListener("click", () => fileInput?.click());
+imageBtn?.addEventListener("click", () => {
+    closeEmojiPicker();
+    imageInput?.click();
+});
+fileBtn?.addEventListener("click", () => {
+    closeEmojiPicker();
+    fileInput?.click();
+});
 imageInput?.addEventListener("change", () => {
     const file = imageInput.files?.[0];
     imageInput.value = "";
@@ -554,7 +606,7 @@ window.openChat = function (otherUser) {
     if (!me) return;
 
     clearReply();
-    if (emojiPicker) emojiPicker.hidden = true;
+    closeEmojiPicker();
 
     if (otherUser === "global") {
         currentChatId = "global";

@@ -35,7 +35,7 @@
     })();
     </script>
 
-    <link rel="stylesheet" href="style.css?v=20260711-redirect-fix-1">
+    <link rel="stylesheet" href="style.css?v=20260711-emoji-hide-fix-2">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -164,7 +164,7 @@
             </div>
 
             <div class="input-box">
-                <button id="emojiBtn" class="bottom-btn" title="Emotikon" type="button">😊</button>
+                <button id="emojiBtn" class="bottom-btn" title="Emotikon" type="button" aria-expanded="false" aria-controls="emojiPicker">😊</button>
 
                 <input type="text" id="messageInput" placeholder="Ketik pesan... (Ctrl+V untuk paste gambar)" autocomplete="off">
 
@@ -186,8 +186,8 @@
 </div>
 
 <script type="module" src="firebase.js?v=20260711-redirect-fix-1"></script>
-<script type="module" src="auth.js?v=20260711-redirect-fix-1"></script>
-<script type="module" src="app.js?v=20260711-redirect-fix-1"></script>
+<script type="module" src="auth.js?v=20260711-emoji-hide-fix-2"></script>
+<script type="module" src="app.js?v=20260711-emoji-hide-fix-2"></script>
 
 </body>
 </html>

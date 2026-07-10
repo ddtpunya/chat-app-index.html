@@ -16,7 +16,7 @@ import {
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260711-redirect-fix-1";
+import { auth, db } from "./firebase.js?v=20260711-emoji-hide-fix-2";
 
 // =========================
 // EMAIL YANG BOLEH LOGIN
