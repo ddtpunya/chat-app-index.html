@@ -31,27 +31,23 @@
                     <div id="myName" class="profile-name">Loading...</div>
                     <div class="online-status">
                         <span class="dot"></span>
-                        <span class="dot dot-soft"></span>
                         Online
                     </div>
                 </div>
             </div>
-
             <div class="profile-actions">
-                <button class="icon-btn" title="Setting">
+                <button class="icon-btn">
                     <i class="fa-solid fa-gear"></i>
                 </button>
-                <button id="logoutBtn" class="icon-btn" title="Logout">
+                <button id="logoutBtn" class="icon-btn">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         </div>
 
-        <div class="sidebar-search-wrap">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" placeholder="Cari user atau grup...">
-            </div>
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" placeholder="Cari user atau grup...">
         </div>
 
         <button class="groups-btn">
@@ -64,66 +60,50 @@
             Buat Grup Baru
         </button>
 
-        <div id="userList" class="group-list"></div>
+        <div id="userList" class="group-list">
+            </div>
 
     </aside>
-
-    <div class="sidebar-divider">
-        <button class="collapse-handle" title="Collapse sidebar">
-            <i class="fa-solid fa-chevron-left"></i>
-        </button>
-    </div>
 
     <main class="chat">
 
         <div class="chat-header">
-            <div class="chat-header-left">
-                <button id="backToSidebarBtn" class="icon-btn back-btn" style="display: none;">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </button>
-
-                <img src="https://ui-avatars.com/api/?name=DDT" class="chat-group-avatar" alt="Group Avatar">
-                <div>
-                    <div class="group-title" id="roomName">Room Chat</div>
-                    <div class="group-members" id="roomMembers">0 anggota</div>
-                </div>
-            </div>
-
+           <div class="chat-header-left">
+    <button id="backToSidebarBtn" class="icon-btn" style="display: none; background: #2563eb; margin-right: 10px;">
+        <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    
+    <img id="roomAvatar" src="https://ui-avatars.com/api/?name=DDT" class="chat-group-avatar" alt="Group Avatar">
+    
+    <div>
+        <div class="group-title" id="roomName">Room Chat</div>
+    </div>
+</div>
+</div>
             <div class="chat-header-right">
-                <div class="message-search">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Cari pesan di chat ini...">
-                </div>
-
-                <button class="icon-btn" title="Cari">
+                <button class="icon-btn">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
-                <button class="icon-btn" title="Setting">
+                <button class="icon-btn">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
         </div>
 
-        <div id="messages"></div>
-
-        <button id="scrollBottomBtn" class="scroll-bottom-btn">
-            <i class="fa-solid fa-chevron-down"></i>
-            Ke Bawah
-        </button>
+        <div id="messages">
+            </div>
 
         <div class="input-box">
             <button class="bottom-btn">😊</button>
-
-            <input type="text" id="messageInput" placeholder="Ketik pesan... (Ctrl+V untuk paste media)">
-
-            <button class="bottom-btn" title="Gambar">
+            <input type="text" id="messageInput" placeholder="Ketik pesan...">
+            <button class="bottom-btn">
                 <i class="fa-regular fa-image"></i>
             </button>
-            <button class="bottom-btn" title="Upload">
-                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+            <button class="bottom-btn">
+                <i class="fa-solid fa-paperclip"></i>
             </button>
-            <button id="sendBtn" class="send-btn" title="Kirim">
-                <i class="fa-regular fa-paper-plane"></i>
+            <button id="sendBtn" class="send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
 
