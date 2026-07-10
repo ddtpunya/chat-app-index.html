@@ -70,47 +70,69 @@ sendBtn.addEventListener("click", async () => {
 // =========================
 // LOAD MESSAGES (REALTIME & FILTERED)
 // =========================
-function listenToChat(chatId) {
-    // Matikan listener sebelumnya jika ada agar tidak tumpang tindih
-    if (unsubscribeChat) unsubscribeChat();
+function snapshot.forEach((doc) => {
+    const data = doc.data();
+    const me = auth.currentUser;
+    if (!me) return;
 
-    // Gunakan query WHERE langsung ke Firestore agar aman dan efisien
-    const q = query(
-        collection(db, "messages"),
-        where("chatId", "==", chatId),
-        orderBy("createdAt")
-    );
+    const isMe = data.uid === me.uid;
+    const name = isMe ? "🎙️ ANTHONY 🎙️" : (data.name || "User");
+    const time = formatTime(data.createdAt);
+    const photo = data.photo || "https://ui-avatars.com/api/?name=" + encodeURIComponent(data.name || "User");
 
-    unsubscribeChat = onSnapshot(q, (snapshot) => {
-        messages.innerHTML = "";
+    const div = document.createElement("div");
+    div.className = isMe ? "message-row me" : "message-row";
 
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const me = auth.currentUser;
-            if (!me) return;
+    if (isMe) {
+        div.innerHTML = `
+            <div class="message-card my-card">
+                <div class="my-left">
+                    <img src="${photo}" class="message-avatar" alt="avatar">
 
-            // Tentukan apakah ini pesan kita atau orang lain
-            const isMe = data.uid === me.uid;
+                    <div class="message-main">
+                        <div class="message-meta">
+                            <span class="message-name">${name}</span>
+                            <span class="message-time">${time}</span>
+                        </div>
 
-            const div = document.createElement("div");
-            div.className = "message";
-            
-            // Atur posisi: Jika pesan kita, taruh di kanan. Jika orang lain, di kiri.
-            div.style.justifyContent = isMe ? "flex-end" : "flex-start";
+                        <div class="message-text">${data.text}</div>
 
-            // Gunakan struktur CSS class yang sudah Anda buat di style.css
-            div.innerHTML = `
-                ${!isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar">` : ''}
-                <div class="bubble" style="background: ${isMe ? '#d9fdd3' : 'white'}; border-radius: ${isMe ? '12px 12px 0 12px' : '12px 12px 12px 0'};">
-                    <div class="sender" style="color: ${isMe ? '#059669' : '#1d4ed8'}">${isMe ? 'Anda' : data.name}</div>
-                    <div>${data.text}</div>
+                        <div class="message-footer">
+                            <span class="message-seen">
+                                ✓ kevinchan0233@gmail.com dan 15 lainnya sekitar 2 jam yang lalu
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                ${isMe ? `<img src="${data.photo || 'https://ui-avatars.com/api/?name='+data.name}" alt="avatar" style="margin-left: 10px;">` : ''}
-            `;
 
-            messages.appendChild(div);
-        });
+                <div class="message-actions">
+                    <button title="Tambah"><i class="fa-solid fa-plus"></i></button>
+                    <button title="Balas"><i class="fa-solid fa-reply"></i></button>
+                    <button title="Edit"><i class="fa-regular fa-pen-to-square"></i></button>
+                    <button title="Hapus"><i class="fa-regular fa-trash-can"></i></button>
+                    <button title="Pin"><i class="fa-solid fa-thumbtack"></i></button>
+                </div>
+            </div>
+        `;
+    } else {
+        div.innerHTML = `
+            <div class="other-message">
+                <img src="${photo}" class="message-avatar" alt="avatar">
 
+                <div class="message-main">
+                    <div class="message-meta">
+                        <span class="message-name">${data.name || "User"}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+
+                    <div class="message-text">${data.text}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    messages.appendChild(div);
+});
         scrollToBottom();
     });
 }
