@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260711-emoji-hide-fix-2";
+import { auth, db, storage } from "./firebase.js?v=20260711-image-upload-fallback-1";
 import {
     collection,
     addDoc,
@@ -73,6 +73,17 @@ function safeURL(value = "") {
     }
 }
 
+function safeAttachmentURL(value = "") {
+    const source = String(value || "");
+
+    // Fallback images stored directly in Firestore are restricted to raster image formats.
+    if (/^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(source)) {
+        return source;
+    }
+
+    return safeURL(source);
+}
+
 function avatarURL(data = {}) {
     const photo = safeURL(data.photo);
     if (photo) return photo;
@@ -131,6 +142,16 @@ function sanitizeFileName(name = "file") {
         .replace(/[^a-zA-Z0-9._-]/g, "_")
         .replace(/_+/g, "_")
         .slice(-120) || "file";
+}
+
+function isImageFile(file) {
+    if (!file) return false;
+
+    if (String(file.type || "").toLowerCase().startsWith("image/")) {
+        return true;
+    }
+
+    return /\.(?:jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(String(file.name || ""));
 }
 
 function createMessageBase(user, chatId, replyData = activeReply) {
@@ -333,6 +354,152 @@ sendBtn?.addEventListener("click", async () => {
 });
 
 // =========================
+// IMAGE FALLBACK (FIRESTORE)
+// =========================
+const INLINE_IMAGE_MAX_BLOB_SIZE = 520 * 1024;
+const INLINE_IMAGE_MAX_DIMENSION = 1280;
+
+function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error || new Error("Gagal membaca gambar."));
+        reader.readAsDataURL(blob);
+    });
+}
+
+function loadImageElement(file) {
+    return new Promise((resolve, reject) => {
+        const objectURL = URL.createObjectURL(file);
+        const image = new Image();
+
+        image.onload = () => {
+            URL.revokeObjectURL(objectURL);
+            resolve(image);
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(objectURL);
+            reject(new Error("Format gambar tidak didukung browser."));
+        };
+
+        image.src = objectURL;
+    });
+}
+
+function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob(
+            (blob) => blob ? resolve(blob) : reject(new Error("Gagal mengoptimalkan gambar.")),
+            type,
+            quality
+        );
+    });
+}
+
+async function compressImageForFirestore(file) {
+    const image = await loadImageElement(file);
+    let width = image.naturalWidth || image.width;
+    let height = image.naturalHeight || image.height;
+
+    if (!width || !height) {
+        throw new Error("Ukuran gambar tidak dapat dibaca.");
+    }
+
+    const scale = Math.min(1, INLINE_IMAGE_MAX_DIMENSION / Math.max(width, height));
+    width = Math.max(1, Math.round(width * scale));
+    height = Math.max(1, Math.round(height * scale));
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d", { alpha: true });
+
+    if (!context) {
+        throw new Error("Browser tidak mendukung pemrosesan gambar.");
+    }
+
+    let outputBlob = null;
+    let quality = 0.82;
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        canvas.width = width;
+        canvas.height = height;
+
+        context.clearRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+
+        // WebP usually gives smaller files while keeping transparency.
+        try {
+            outputBlob = await canvasToBlob(canvas, "image/webp", quality);
+        } catch {
+            outputBlob = await canvasToBlob(canvas, "image/jpeg", quality);
+        }
+
+        if (outputBlob.size <= INLINE_IMAGE_MAX_BLOB_SIZE) break;
+
+        quality = Math.max(0.46, quality - 0.08);
+
+        if (quality <= 0.5) {
+            width = Math.max(320, Math.round(width * 0.84));
+            height = Math.max(320, Math.round(height * 0.84));
+        }
+    }
+
+    if (!outputBlob || outputBlob.size > INLINE_IMAGE_MAX_BLOB_SIZE) {
+        throw new Error("Gambar masih terlalu besar setelah dikompres.");
+    }
+
+    return {
+        dataURL: await blobToDataURL(outputBlob),
+        size: outputBlob.size,
+        type: outputBlob.type || "image/webp",
+        width,
+        height
+    };
+}
+
+function shouldUseImageFallback(error) {
+    const code = String(error?.code || "");
+    const message = String(error?.message || "").toLowerCase();
+
+    return [
+        "storage/quota-exceeded",
+        "storage/unauthorized",
+        "storage/bucket-not-found",
+        "storage/project-not-found",
+        "storage/unknown",
+        "storage/retry-limit-exceeded"
+    ].includes(code) ||
+        message.includes("402") ||
+        message.includes("blaze") ||
+        message.includes("billing") ||
+        message.includes("storage");
+}
+
+async function sendImageThroughFirestore(file, user, targetChatId, replyData) {
+    updateUploadProgress(5, "Storage tidak tersedia, mengoptimalkan gambar...");
+
+    const optimized = await compressImageForFirestore(file);
+    updateUploadProgress(75, "Menyimpan gambar ke chat...");
+
+    await addDoc(collection(db, "messages"), {
+        ...createMessageBase(user, targetChatId, replyData),
+        text: "",
+        attachment: {
+            url: optimized.dataURL,
+            name: file.name || "gambar",
+            type: optimized.type,
+            size: optimized.size,
+            isImage: true,
+            inlineFirestore: true,
+            width: optimized.width,
+            height: optimized.height
+        }
+    });
+
+    updateUploadProgress(100, "Gambar berhasil dikirim.");
+}
+
+// =========================
 // UPLOAD IMAGE / FILE
 // =========================
 function updateUploadProgress(percent, label) {
@@ -355,7 +522,7 @@ async function uploadAndSend(file, imageOnly = false) {
         return;
     }
 
-    if (imageOnly && !file.type.startsWith("image/")) {
+    if (imageOnly && !isImageFile(file)) {
         alert("Tombol gambar hanya menerima file gambar.");
         return;
     }
@@ -370,7 +537,6 @@ async function uploadAndSend(file, imageOnly = false) {
     const safeName = sanitizeFileName(file.name);
     const storagePath = `chat-files/${targetChatId}/${user.uid}/${Date.now()}_${safeName}`;
     const storageRef = ref(storage, storagePath);
-
     try {
         setComposerDisabled(true);
         updateUploadProgress(0, `Menyiapkan ${file.name}...`);
@@ -399,7 +565,7 @@ async function uploadAndSend(file, imageOnly = false) {
         });
 
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        const isImage = file.type.startsWith("image/");
+        const isImage = isImageFile(file);
 
         updateUploadProgress(100, "Menyimpan pesan...");
 
@@ -419,8 +585,30 @@ async function uploadAndSend(file, imageOnly = false) {
         clearReply();
         if (targetChatId === currentChatId) scrollToBottom();
     } catch (error) {
-        console.error("Upload gagal:", error);
-        alert(`Upload gagal: ${error.message || "Periksa Firebase Storage Rules."}`);
+        console.error("Upload Storage gagal:", error);
+
+        if (imageOnly && shouldUseImageFallback(error)) {
+            try {
+                await sendImageThroughFirestore(file, user, targetChatId, replyData);
+                clearReply();
+                if (targetChatId === currentChatId) scrollToBottom();
+                return;
+            } catch (fallbackError) {
+                console.error("Fallback gambar ke Firestore gagal:", fallbackError);
+                alert(
+                    `Gambar gagal dikirim.\n\n` +
+                    `Storage: ${error.code || error.message || "tidak tersedia"}\n` +
+                    `Fallback: ${fallbackError.message || "gagal menyimpan gambar"}`
+                );
+                return;
+            }
+        }
+
+        const code = error?.code ? ` (${error.code})` : "";
+        alert(
+            `Upload file gagal${code}. ` +
+            `Pastikan Firebase Storage aktif, Rules sudah dipublish, dan project menggunakan paket Blaze.`
+        );
     } finally {
         setComposerDisabled(false);
         window.setTimeout(hideUploadProgress, 500);
@@ -451,7 +639,7 @@ fileInput?.addEventListener("change", () => {
 
 input?.addEventListener("paste", (event) => {
     const pastedFiles = Array.from(event.clipboardData?.files || []);
-    const image = pastedFiles.find((file) => file.type.startsWith("image/"));
+    const image = pastedFiles.find((file) => isImageFile(file));
     if (!image) return;
 
     event.preventDefault();
@@ -475,17 +663,22 @@ function renderReplyQuote(replyTo) {
 function renderAttachment(attachment) {
     if (!attachment) return "";
 
-    const url = safeURL(attachment.url);
+    const url = safeAttachmentURL(attachment.url);
     if (!url) return `<div class="attachment-error">Attachment tidak tersedia</div>`;
 
     const name = escapeHTML(attachment.name || "File");
     const size = escapeHTML(formatFileSize(Number(attachment.size) || 0));
 
     if (attachment.isImage || String(attachment.type || "").startsWith("image/")) {
+        const imageMarkup = `
+            <img class="message-image" src="${escapeHTML(url)}" alt="${name}" loading="lazy">
+        `;
+
         return `
-            <a class="message-image-link" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">
-                <img class="message-image" src="${escapeHTML(url)}" alt="${name}" loading="lazy">
-            </a>
+            ${attachment.inlineFirestore
+                ? `<div class="message-image-link inline-image">${imageMarkup}</div>`
+                : `<a class="message-image-link" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${imageMarkup}</a>`
+            }
             <div class="attachment-caption">
                 <span>${name}</span>
                 ${size ? `<span>${size}</span>` : ""}

@@ -16,7 +16,7 @@ import {
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260711-emoji-hide-fix-2";
+import { auth, db } from "./firebase.js?v=20260711-image-upload-fallback-1";
 
 // =========================
 // EMAIL YANG BOLEH LOGIN

@@ -1233,3 +1233,9 @@ button:disabled {
         padding-right: 7px;
     }
 }
+
+
+/* Image stored directly in Firestore fallback */
+.message-image-link.inline-image {
+    cursor: default;
+}
