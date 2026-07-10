@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mengarahkan ke CHAT DDT</title>
+    <meta name="robots" content="noindex">
+</head>
+<body>
+    <p>Mengarahkan ke CHAT DDT...</p>
+    <script>
+    (async () => {
+        const APP_PATH = "/chat-app-index.html/";
+
+        try {
+            if ("serviceWorker" in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(
+                    registrations
+                        .filter(registration => {
+                            try {
+                                return new URL(registration.scope).pathname.startsWith(APP_PATH);
+                            } catch {
+                                return false;
+                            }
+                        })
+                        .map(registration => registration.unregister())
+                );
+            }
+        } catch (error) {
+            console.warn("Service worker cleanup gagal:", error);
+        }
+
+        // Query parameter creates a fresh document cache key.
+        location.replace(`${APP_PATH}?reset=20260711-redirect-fix-1`);
+    })();
+    </script>
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=/chat-app-index.html/?reset=20260711-redirect-fix-1">
+    </noscript>
+</body>
+</html>

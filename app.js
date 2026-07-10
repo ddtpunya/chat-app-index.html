@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js";
+import { auth, db, storage } from "./firebase.js?v=20260711-redirect-fix-1";
 import {
     collection,
     addDoc,
@@ -575,51 +575,6 @@ window.openChat = function (otherUser) {
 
 auth.onAuthStateChanged((user) => {
     if (user) window.openChat("global");
-});
-
-// ==========================================
-// MOBILE VISUAL VIEWPORT / KEYBOARD FIX
-// ==========================================
-function syncMobileViewport() {
-    const viewport = window.visualViewport;
-    const height = Math.round(viewport?.height || window.innerHeight);
-    const offsetTop = Math.round(viewport?.offsetTop || 0);
-
-    document.documentElement.style.setProperty("--app-height", `${height}px`);
-    document.documentElement.style.setProperty("--viewport-offset-top", `${offsetTop}px`);
-}
-
-function keepComposerVisible() {
-    if (window.innerWidth > 768) return;
-
-    syncMobileViewport();
-    window.requestAnimationFrame(() => {
-        if (document.activeElement === input) {
-            scrollToBottom();
-            input?.scrollIntoView({ block: "nearest", inline: "nearest" });
-        }
-    });
-}
-
-syncMobileViewport();
-window.addEventListener("resize", syncMobileViewport, { passive: true });
-window.addEventListener("orientationchange", () => {
-    window.setTimeout(syncMobileViewport, 120);
-});
-
-if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", keepComposerVisible, { passive: true });
-    window.visualViewport.addEventListener("scroll", syncMobileViewport, { passive: true });
-}
-
-input?.addEventListener("focus", () => {
-    if (emojiPicker) emojiPicker.hidden = true;
-    window.setTimeout(keepComposerVisible, 180);
-    window.setTimeout(keepComposerVisible, 420);
-});
-
-input?.addEventListener("blur", () => {
-    window.setTimeout(syncMobileViewport, 120);
 });
 
 // ==========================================

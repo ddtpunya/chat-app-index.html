@@ -4,7 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>CHAT DDT</title>
-    <link rel="stylesheet" href="style.css">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script>
+    (() => {
+        const APP_PATH = "/chat-app-index.html/";
+
+        // Remove only service workers belonging to this GitHub Pages project.
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", async () => {
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(
+                        registrations
+                            .filter(registration => {
+                                try {
+                                    return new URL(registration.scope).pathname.startsWith(APP_PATH);
+                                } catch {
+                                    return false;
+                                }
+                            })
+                            .map(registration => registration.unregister())
+                    );
+                } catch (error) {
+                    console.warn("Service worker cleanup gagal:", error);
+                }
+            });
+        }
+    })();
+    </script>
+
+    <link rel="stylesheet" href="style.css?v=20260711-redirect-fix-1">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -154,9 +185,9 @@
     </main>
 </div>
 
-<script type="module" src="firebase.js"></script>
-<script type="module" src="auth.js"></script>
-<script type="module" src="app.js"></script>
+<script type="module" src="firebase.js?v=20260711-redirect-fix-1"></script>
+<script type="module" src="auth.js?v=20260711-redirect-fix-1"></script>
+<script type="module" src="app.js?v=20260711-redirect-fix-1"></script>
 
 </body>
 </html>
