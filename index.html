@@ -2,10 +2,10 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <title>CHAT DDT</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 
@@ -23,7 +23,6 @@
 <div id="chatPage" style="display:none;">
 
     <aside class="sidebar">
-
         <div class="profile-card">
             <div class="profile-left">
                 <img id="myPhoto" src="https://ui-avatars.com/api/?name=DDT" class="profile-avatar" alt="My Profile">
@@ -31,84 +30,128 @@
                     <div id="myName" class="profile-name">Loading...</div>
                     <div class="online-status">
                         <span class="dot"></span>
+                        <span class="dot dot-soft"></span>
                         Online
                     </div>
                 </div>
             </div>
+
             <div class="profile-actions">
-                <button class="icon-btn">
+                <button class="icon-btn" title="Setting" type="button">
                     <i class="fa-solid fa-gear"></i>
                 </button>
-                <button id="logoutBtn" class="icon-btn">
+                <button id="logoutBtn" class="icon-btn" title="Logout" type="button">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         </div>
 
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Cari user atau grup...">
+        <div class="sidebar-search-wrap">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Cari user atau grup...">
+            </div>
         </div>
 
-        <button class="groups-btn">
+        <button class="groups-btn" type="button">
             <i class="fa-regular fa-message"></i>
             Groups
         </button>
 
-        <button class="create-group-btn">
+        <button class="create-group-btn" type="button">
             <i class="fa-solid fa-plus"></i>
             Buat Grup Baru
         </button>
 
-        <div id="userList" class="group-list">
-            </div>
-
+        <div id="userList" class="group-list"></div>
     </aside>
 
-    <main class="chat">
-
-        <div class="chat-header">
-           <div class="chat-header-left">
-    <button id="backToSidebarBtn" class="icon-btn" style="display: none; background: #2563eb; margin-right: 10px;">
-        <i class="fa-solid fa-arrow-left"></i>
-    </button>
-    
-    <img id="roomAvatar" src="https://ui-avatars.com/api/?name=DDT" class="chat-group-avatar" alt="Group Avatar">
-    
-    <div>
-        <div class="group-title" id="roomName">Room Chat</div>
+    <div class="sidebar-divider">
+        <button class="collapse-handle" title="Collapse sidebar" type="button">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
     </div>
-</div>
-</div>
+
+    <main class="chat">
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <button id="backToSidebarBtn" class="icon-btn back-btn" style="display:none;" type="button">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+
+                <img src="https://ui-avatars.com/api/?name=DDT" class="chat-group-avatar" alt="Group Avatar">
+                <div>
+                    <div class="group-title" id="roomName">Room Chat</div>
+                    <div class="group-members" id="roomMembers">0 anggota</div>
+                </div>
+            </div>
+
             <div class="chat-header-right">
-                <button class="icon-btn">
+                <div class="message-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Cari pesan di chat ini...">
+                </div>
+
+                <button class="icon-btn" title="Cari" type="button">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
-                <button class="icon-btn">
+                <button class="icon-btn" title="Setting" type="button">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
         </div>
 
-        <div id="messages">
+        <div id="messages"></div>
+
+        <button id="scrollBottomBtn" class="scroll-bottom-btn" type="button">
+            <i class="fa-solid fa-chevron-down"></i>
+            Ke Bawah
+        </button>
+
+        <div id="emojiPicker" class="emoji-picker" hidden aria-label="Pilih emotikon"></div>
+
+        <div class="composer-wrap">
+            <div id="replyPreview" class="reply-preview" hidden>
+                <div class="reply-preview-line"></div>
+                <div class="reply-preview-content">
+                    <div class="reply-preview-label">
+                        Membalas <strong id="replyPreviewName">User</strong>
+                    </div>
+                    <div id="replyPreviewText" class="reply-preview-text"></div>
+                </div>
+                <button id="cancelReplyBtn" class="cancel-reply-btn" type="button" title="Batalkan balasan">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
-        <div class="input-box">
-            <button class="bottom-btn">😊</button>
-            <input type="text" id="messageInput" placeholder="Ketik pesan...">
-            <button class="bottom-btn">
-                <i class="fa-regular fa-image"></i>
-            </button>
-            <button class="bottom-btn">
-                <i class="fa-solid fa-paperclip"></i>
-            </button>
-            <button id="sendBtn" class="send-btn">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
+            <div id="uploadStatus" class="upload-status" hidden>
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span id="uploadStatusText">Mengupload...</span>
+                <div class="upload-progress-track">
+                    <div id="uploadProgressBar" class="upload-progress-bar"></div>
+                </div>
+            </div>
+
+            <div class="input-box">
+                <button id="emojiBtn" class="bottom-btn" title="Emotikon" type="button">😊</button>
+
+                <input type="text" id="messageInput" placeholder="Ketik pesan... (Ctrl+V untuk paste gambar)" autocomplete="off">
+
+                <button id="imageBtn" class="bottom-btn" title="Upload gambar" type="button">
+                    <i class="fa-regular fa-image"></i>
+                </button>
+                <button id="fileBtn" class="bottom-btn" title="Upload file" type="button">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                </button>
+                <button id="sendBtn" class="send-btn" title="Kirim" type="button">
+                    <i class="fa-regular fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
 
+        <input id="imageInput" type="file" accept="image/*" hidden>
+        <input id="fileInput" type="file" hidden>
     </main>
-
 </div>
 
 <script type="module" src="firebase.js"></script>
