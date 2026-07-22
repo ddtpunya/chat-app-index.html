@@ -4,9 +4,7 @@ import {
     signInWithRedirect,
     getRedirectResult,
     onAuthStateChanged,
-    signOut,
-    setPersistence,
-    browserLocalPersistence
+    signOut
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
 import {
@@ -19,15 +17,12 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260723-presence-read-receipts-v4";
+import { auth, db } from "./firebase.js?v=20260723-image-gallery-zoom-v7";
 
 // Tambahkan email lain ke daftar ini agar mereka dapat login dan muncul
 // sebagai pilihan private chat / anggota grup.
 const ALLOWED_EMAILS = [
-    "verensmb@gmail.com",
-    "anthonyan4556@gmail.com",
-    "verenlim49@gmail.com",
-    "anthonywian4@gmail.com",
+    "antho56@gmail.com"
 ];
 
 const loginBtn = document.getElementById("loginBtn");
@@ -186,21 +181,46 @@ function isEmailAllowed(email) {
     return ALLOWED_EMAILS.some((item) => item.toLowerCase().trim() === normalized);
 }
 
-async function prepareAuthPersistence() {
-    await setPersistence(auth, browserLocalPersistence);
+const authLoadingPage = document.getElementById("authLoadingPage");
+let authObserverStarted = false;
+
+function showAuthLoading() {
+    if (authLoadingPage) authLoadingPage.style.display = "flex";
+    if (loginPage) loginPage.style.display = "none";
+    if (chatPage) chatPage.style.display = "none";
 }
 
-prepareAuthPersistence()
-    .then(() => getRedirectResult(auth))
-    .catch((error) => {
+function hideAuthLoading() {
+    if (authLoadingPage) authLoadingPage.style.display = "none";
+}
+
+async function initializeAuthentication() {
+    if (authObserverStarted) return;
+    authObserverStarted = true;
+    showAuthLoading();
+
+    try {
+        // Complete a pending redirect login first, when one exists.
+        await getRedirectResult(auth);
+    } catch (error) {
         console.error("Redirect login error:", error.code, error.message);
-    });
+    }
+
+    try {
+        // Do not decide that the user is logged out until Firebase has finished
+        // restoring the saved session from IndexedDB/localStorage.
+        await auth.authStateReady();
+    } catch (error) {
+        console.error("Auth initialization error:", error);
+    }
+
+    onAuthStateChanged(auth, handleAuthStateChange);
+}
 
 loginBtn?.addEventListener("click", async () => {
     try {
         loginBtn.disabled = true;
         loginBtn.innerHTML = `<i class="fa-brands fa-google"></i> Membuka Google...`;
-        await prepareAuthPersistence();
         await signInWithPopup(auth, provider);
     } catch (error) {
         console.error("Login Google gagal:", error.code, error.message);
@@ -435,25 +455,37 @@ function startDirectoryListeners(user) {
     );
 }
 
-onAuthStateChanged(auth, async (user) => {
+async function handleAuthStateChange(user) {
     currentUser = user;
+    hideAuthLoading();
 
     if (!user) {
         stopPresenceTracking();
         unsubscribeUsers?.();
         unsubscribeGroups?.();
-        loginPage && (loginPage.style.display = "flex");
-        chatPage && (chatPage.style.display = "none");
+        if (loginPage) loginPage.style.display = "flex";
+        if (chatPage) chatPage.style.display = "none";
         return;
     }
 
     if (!isEmailAllowed(user.email)) {
         alert("Akses ditolak: Email Anda tidak terdaftar!");
         await signOut(auth);
-        loginPage && (loginPage.style.display = "flex");
-        chatPage && (chatPage.style.display = "none");
+        if (loginPage) loginPage.style.display = "flex";
+        if (chatPage) chatPage.style.display = "none";
         return;
     }
+
+    // The authenticated UI is shown immediately after Firebase restores the
+    // session. A temporary Firestore write problem must not look like logout.
+    if (loginPage) loginPage.style.display = "none";
+    if (chatPage) chatPage.style.display = "flex";
+
+    if (myName) myName.textContent = user.displayName || user.email?.split("@")[0] || "User";
+    if (myPhoto) myPhoto.src = safeImageURL(user.photoURL, user.displayName || user.email || "User");
+
+    startPresenceTracking();
+    startDirectoryListeners(user);
 
     try {
         await setDoc(
@@ -470,17 +502,10 @@ onAuthStateChanged(auth, async (user) => {
             { merge: true }
         );
     } catch (error) {
-        console.error("Gagal menyimpan user:", error);
-        alert(`Gagal menyimpan data user: ${error.message}`);
-        return;
+        // Keep the existing Firebase Auth session. Presence can retry on the
+        // next heartbeat instead of forcing the user back to the login page.
+        console.error("Gagal menyinkronkan data user:", error);
     }
+}
 
-    loginPage && (loginPage.style.display = "none");
-    chatPage && (chatPage.style.display = "flex");
-
-    if (myName) myName.textContent = user.displayName || user.email?.split("@")[0] || "User";
-    if (myPhoto) myPhoto.src = safeImageURL(user.photoURL, user.displayName || user.email || "User");
-
-    startPresenceTracking();
-    startDirectoryListeners(user);
-});
+initializeAuthentication();
