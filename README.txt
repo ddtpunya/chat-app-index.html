@@ -1,13 +1,15 @@
-CHAT DDT - Image Upload Fix v2
+CHAT DDT — Reply & Upload Status Fix v3
 
-Perubahan utama:
-- Upload gambar tidak lagi bergantung pada Firebase Storage.
-- Gambar dikompres otomatis lalu disimpan ke Firestore sebagai data inline.
-- Maksimum file sumber 20 MB; hasil kompresi dibatasi sekitar 420 KB.
-- Tombol upload file non-gambar masih menggunakan Firebase Storage dan memerlukan paket Blaze.
+Perbaikan:
+- Bar balasan benar-benar tersembunyi saat tidak aktif.
+- Tombol X membatalkan reply dan memfokuskan kembali kolom pesan.
+- Tombol Balas pada pesan kembali berfungsi dan menyimpan replyTo.
+- Informasi upload otomatis hilang setelah berhasil/gagal.
+- Ditambahkan fallback inline untuk mengatasi CSS lama yang masih tersimpan di cache.
+- Cache version diperbarui ke 20260723-reply-upload-bar-fix-v3.
 
-Cara pasang:
-1. Upload/replace index.html, chat.html, app.js, auth.js, firebase.js, dan style.css.
-2. Publish firestore.rules dari paket ini.
-3. Hard refresh browser (Ctrl+F5).
-4. Coba upload JPG/PNG/WebP.
+Pemasangan:
+1. Ganti semua file website dengan isi folder ini.
+2. Upload/publish website.
+3. Tekan Ctrl+F5 atau buka Incognito.
+4. Tidak perlu mengubah struktur database.

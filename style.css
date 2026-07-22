@@ -823,6 +823,12 @@ button:disabled {
     display: none !important;
 }
 
+/* Pastikan atribut hidden tidak dikalahkan oleh display:flex/grid komponen. */
+.reply-preview[hidden],
+.upload-status[hidden] {
+    display: none !important;
+}
+
 .emoji-picker {
     position: absolute;
     left: 15px;

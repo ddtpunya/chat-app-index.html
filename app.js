@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260723-image-upload-firestore-v2";
+import { auth, db, storage } from "./firebase.js?v=20260723-reply-upload-bar-fix-v3";
 import {
     collection,
     addDoc,
@@ -95,6 +95,7 @@ let currentRoom = {
 };
 let currentMessageSearch = "";
 let currentOpenModal = null;
+let uploadHideTimer = null;
 
 // =========================
 // HELPER
@@ -225,7 +226,23 @@ function setComposerDisabled(disabled) {
 // =========================
 // REPLY
 // =========================
-function setReply(messageId, data) {
+function setReplyPreviewVisible(visible) {
+    if (!replyPreview) return;
+
+    replyPreview.hidden = !visible;
+    replyPreview.setAttribute("aria-hidden", String(!visible));
+
+    // Inline fallback untuk browser/cache CSS lama.
+    if (visible) {
+        replyPreview.style.removeProperty("display");
+    } else {
+        replyPreview.style.setProperty("display", "none", "important");
+    }
+}
+
+function setReply(messageId, data = {}) {
+    if (!messageId) return;
+
     activeReply = {
         id: messageId,
         uid: data.uid || "",
@@ -235,19 +252,28 @@ function setReply(messageId, data) {
 
     if (replyPreviewName) replyPreviewName.textContent = activeReply.name;
     if (replyPreviewText) replyPreviewText.textContent = activeReply.preview;
-    if (replyPreview) replyPreview.hidden = false;
+    setReplyPreviewVisible(true);
 
     input?.focus();
 }
 
-function clearReply() {
+function clearReply(options = {}) {
     activeReply = null;
-    if (replyPreview) replyPreview.hidden = true;
     if (replyPreviewName) replyPreviewName.textContent = "User";
     if (replyPreviewText) replyPreviewText.textContent = "";
+    setReplyPreviewVisible(false);
+
+    if (options.focusInput) input?.focus();
 }
 
-cancelReplyBtn?.addEventListener("click", clearReply);
+cancelReplyBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    clearReply({ focusInput: true });
+});
+
+// Keadaan awal harus benar-benar tersembunyi, termasuk saat CSS lama masih tercache.
+clearReply();
 
 // =========================
 // EMOJI PICKER
@@ -546,16 +572,45 @@ async function sendImageThroughFirestore(file, user, targetChatId, replyData) {
 // =========================
 // UPLOAD IMAGE / FILE
 // =========================
+function setUploadStatusVisible(visible) {
+    if (!uploadStatus) return;
+
+    uploadStatus.hidden = !visible;
+    uploadStatus.setAttribute("aria-hidden", String(!visible));
+
+    // Inline fallback agar status tetap dapat hilang walau CSS lama masih tercache.
+    if (visible) {
+        uploadStatus.style.removeProperty("display");
+    } else {
+        uploadStatus.style.setProperty("display", "none", "important");
+    }
+}
+
 function updateUploadProgress(percent, label) {
-    if (uploadStatus) uploadStatus.hidden = false;
+    if (uploadHideTimer) {
+        window.clearTimeout(uploadHideTimer);
+        uploadHideTimer = null;
+    }
+
+    setUploadStatusVisible(true);
     if (uploadStatusText) uploadStatusText.textContent = label;
     if (uploadProgressBar) uploadProgressBar.style.width = `${Math.max(0, Math.min(percent, 100))}%`;
 }
 
 function hideUploadProgress() {
-    if (uploadStatus) uploadStatus.hidden = true;
+    setUploadStatusVisible(false);
+    if (uploadStatusText) uploadStatusText.textContent = "Mengupload...";
     if (uploadProgressBar) uploadProgressBar.style.width = "0%";
+    uploadHideTimer = null;
 }
+
+function scheduleHideUploadProgress(delay = 900) {
+    if (uploadHideTimer) window.clearTimeout(uploadHideTimer);
+    uploadHideTimer = window.setTimeout(hideUploadProgress, delay);
+}
+
+// Keadaan awal harus tersembunyi.
+hideUploadProgress();
 
 async function uploadAndSend(file, imageOnly = false) {
     if (!file || isUploading) return;
@@ -665,7 +720,7 @@ async function uploadAndSend(file, imageOnly = false) {
         }
     } finally {
         setComposerDisabled(false);
-        window.setTimeout(hideUploadProgress, 700);
+        scheduleHideUploadProgress(imageOnly ? 1100 : 900);
         if (imageInput) imageInput.value = "";
         if (fileInput) fileInput.value = "";
     }
@@ -834,11 +889,15 @@ function listenToChat(chatId) {
                 </div>
             `;
 
-            row.querySelector(".reply-message-btn")?.addEventListener("click", () => {
+            row.querySelector(".reply-message-btn")?.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 setReply(messageDoc.id, data);
             });
 
-            row.querySelector(".message-reply-quote")?.addEventListener("click", () => {
+            row.querySelector(".message-reply-quote")?.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
                 focusOriginalMessage(data.replyTo?.id);
             });
 
