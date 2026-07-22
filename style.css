@@ -184,6 +184,14 @@ body {
     z-index: 2;
 }
 
+#profileSettingsBtn {
+    position: relative;
+}
+
+#profileSettingsBtn.has-friend-request {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, .24), var(--glow);
+}
+
 /* ICON */
 .icon-btn {
     width: 38px;
@@ -2397,6 +2405,89 @@ button.group-item {
     display: none !important;
 }
 
+.settings-icon-badge {
+    top: -8px;
+    right: -8px;
+    border-color: #17275a;
+}
+
+.settings-menu-btn {
+    width: 100%;
+    min-height: 68px;
+    margin: 4px 0 14px;
+    padding: 11px 12px;
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto 12px;
+    align-items: center;
+    gap: 11px;
+    border: 1px solid rgba(96, 165, 250, .24);
+    border-radius: 13px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, .13), rgba(15, 118, 110, .11));
+    color: #eef6ff;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+
+.settings-menu-btn:hover,
+.settings-menu-btn.has-request {
+    border-color: rgba(94, 234, 212, .48);
+    background: linear-gradient(135deg, rgba(37, 99, 235, .21), rgba(15, 118, 110, .18));
+    transform: translateY(-1px);
+}
+
+.settings-menu-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: linear-gradient(145deg, #0f766e, #2563eb);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, .22);
+}
+
+.settings-menu-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.settings-menu-copy strong {
+    font-size: 14px;
+}
+
+.settings-menu-copy small {
+    color: #9fb0c8;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.settings-menu-badge {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: 0 5px 15px rgba(239, 68, 68, .32);
+}
+
+.settings-menu-badge[hidden] {
+    display: none !important;
+}
+
+.settings-menu-arrow {
+    color: #7f91ad;
+    font-size: 12px;
+}
+
 .friend-manager-card {
     width: min(650px, 100%);
 }
@@ -2645,5 +2736,19 @@ button.group-item {
 
     .friend-search-btn {
         width: 100%;
+    }
+}
+
+/* v11: menu Teman berada di Pengaturan profil */
+@media (max-width: 600px) {
+    .settings-menu-btn {
+        grid-template-columns: 40px minmax(0, 1fr) auto 10px;
+        gap: 9px;
+        padding: 10px;
+    }
+
+    .settings-menu-icon {
+        width: 40px;
+        height: 40px;
     }
 }

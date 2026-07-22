@@ -32,7 +32,7 @@
         }
     })();
     </script>
-    <link rel="stylesheet" href="style.css?v=20260723-private-search-gmail-v10">
+    <link rel="stylesheet" href="style.css?v=20260723-friends-inside-settings-v11">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -71,8 +71,9 @@
             </div>
 
             <div class="profile-actions">
-                <button id="profileSettingsBtn" class="icon-btn" title="Pengaturan profil" type="button">
+                <button id="profileSettingsBtn" class="icon-btn" title="Pengaturan" type="button">
                     <i class="fa-solid fa-gear"></i>
+                    <span id="profileFriendRequestBadge" class="friend-request-badge settings-icon-badge" hidden>0</span>
                 </button>
                 <button id="logoutBtn" class="icon-btn" title="Logout" type="button">
                     <i class="fa-solid fa-right-from-bracket"></i>
@@ -92,11 +93,6 @@
             <span class="button-label">Groups</span>
         </button>
 
-        <button id="friendsBtn" class="friends-btn" type="button" title="Kelola teman">
-            <i class="fa-solid fa-user-group"></i>
-            <span class="button-label">Teman</span>
-            <span id="friendRequestBadge" class="friend-request-badge" hidden>0</span>
-        </button>
 
         <button id="createGroupBtn" class="create-group-btn" type="button">
             <i class="fa-solid fa-plus"></i>
@@ -287,6 +283,19 @@
             <input id="profileDisplayName" class="modal-input" type="text" maxlength="40" required>
             <label class="field-label" for="profileEmail">Email</label>
             <input id="profileEmail" class="modal-input" type="email" readonly>
+
+            <button id="profileFriendsBtn" class="settings-menu-btn" type="button">
+                <span class="settings-menu-icon">
+                    <i class="fa-solid fa-user-group"></i>
+                </span>
+                <span class="settings-menu-copy">
+                    <strong>Teman & Permintaan</strong>
+                    <small>Cari Gmail, terima permintaan, dan kelola teman.</small>
+                </span>
+                <span id="settingsFriendRequestBadge" class="settings-menu-badge" hidden>0</span>
+                <i class="fa-solid fa-chevron-right settings-menu-arrow"></i>
+            </button>
+
             <label class="switch-row">
                 <span>
                     <strong>Mode pesan ringkas</strong>
@@ -399,8 +408,8 @@
 
 <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-<script type="module" src="firebase.js?v=20260723-private-search-gmail-v10"></script>
-<script type="module" src="auth.js?v=20260723-private-search-gmail-v10"></script>
-<script type="module" src="app.js?v=20260723-private-search-gmail-v10"></script>
+<script type="module" src="firebase.js?v=20260723-friends-inside-settings-v11"></script>
+<script type="module" src="auth.js?v=20260723-friends-inside-settings-v11"></script>
+<script type="module" src="app.js?v=20260723-friends-inside-settings-v11"></script>
 </body>
 </html>

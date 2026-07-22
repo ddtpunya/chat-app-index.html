@@ -28,3 +28,10 @@ Catatan keamanan:
 - Collection users dan email_lookup tidak dapat ditampilkan sebagai daftar oleh client.
 - Pencarian membutuhkan alamat email lengkap; tidak ada pencarian sebagian nama atau saran akun.
 - Tanpa backend khusus/Cloud Functions, alamat yang memang sudah diketahui masih dapat dicoba secara exact-match. Versi ini mencegah browsing direktori, bukan rate-limiting pencarian.
+
+
+V11:
+- Tombol Teman di sidebar dihapus.
+- Menu Teman & Permintaan dipindahkan ke Pengaturan (ikon gear di sebelah Logout).
+- Badge permintaan masuk tampil pada ikon Pengaturan dan di dalam menu Teman.
+- Tidak ada perubahan Firestore Rules dari v10.

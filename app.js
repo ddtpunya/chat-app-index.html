@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260723-private-search-gmail-v10";
+import { auth, db, storage } from "./firebase.js?v=20260723-friends-inside-settings-v11";
 import {
     collection,
     addDoc,
@@ -52,8 +52,9 @@ const messageSearchStatus = document.getElementById("messageSearchStatus");
 const clearMessageSearchBtn = document.getElementById("clearMessageSearchBtn");
 const profileSettingsBtn = document.getElementById("profileSettingsBtn");
 const chatSettingsBtn = document.getElementById("chatSettingsBtn");
-const friendsBtn = document.getElementById("friendsBtn");
-const friendRequestBadge = document.getElementById("friendRequestBadge");
+const profileFriendsBtn = document.getElementById("profileFriendsBtn");
+const profileFriendRequestBadge = document.getElementById("profileFriendRequestBadge");
+const settingsFriendRequestBadge = document.getElementById("settingsFriendRequestBadge");
 const friendsModal = document.getElementById("friendsModal");
 const friendSearchForm = document.getElementById("friendSearchForm");
 const friendSearchInput = document.getElementById("friendSearchInput");
@@ -1537,15 +1538,20 @@ function getFriendRelation(otherUid) {
 
 function updateFriendRequestBadge() {
     const me = auth.currentUser;
-    if (!friendRequestBadge || !me) return;
+    const total = me
+        ? (window.chatDirectoryFriendships || []).filter((item) => (
+            item.status === "pending" && item.addresseeUid === me.uid
+        )).length
+        : 0;
 
-    const total = (window.chatDirectoryFriendships || []).filter((item) => (
-        item.status === "pending" && item.addresseeUid === me.uid
-    )).length;
+    [profileFriendRequestBadge, settingsFriendRequestBadge].forEach((badge) => {
+        if (!badge) return;
+        badge.textContent = String(total);
+        badge.hidden = total === 0;
+    });
 
-    friendRequestBadge.textContent = String(total);
-    friendRequestBadge.hidden = total === 0;
-    friendsBtn?.classList.toggle("has-request", total > 0);
+    profileSettingsBtn?.classList.toggle("has-friend-request", total > 0);
+    profileFriendsBtn?.classList.toggle("has-request", total > 0);
 }
 
 function friendStatusMarkup(state) {
@@ -1840,12 +1846,15 @@ async function performFriendAction(action, otherUid, button) {
     }
 }
 
-friendsBtn?.addEventListener("click", () => {
+profileFriendsBtn?.addEventListener("click", () => {
     if (friendSearchInput) friendSearchInput.value = "";
     searchedFriendUser = null;
     friendSearchBusy = false;
     renderFriendManager();
-    openModal(friendsModal);
+
+    // Tutup Pengaturan terlebih dahulu agar backdrop modal tidak bentrok.
+    closeModal();
+    window.setTimeout(() => openModal(friendsModal), 210);
 });
 
 friendSearchForm?.addEventListener("submit", (event) => {
