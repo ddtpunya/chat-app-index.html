@@ -18,12 +18,12 @@ import {
     where
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260723-all-buttons-v1";
+import { auth, db } from "./firebase.js?v=20260723-image-upload-firestore-v2";
 
 // Tambahkan email lain ke daftar ini agar mereka dapat login dan muncul
 // sebagai pilihan private chat / anggota grup.
 const ALLOWED_EMAILS = [
-    "anthonyan4556@gmail.com"
+    "antho56@gmail.com"
 ];
 
 const loginBtn = document.getElementById("loginBtn");

@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260723-all-buttons-v1";
+import { auth, db, storage } from "./firebase.js?v=20260723-image-upload-firestore-v2";
 import {
     collection,
     addDoc,
@@ -400,8 +400,8 @@ sendBtn?.addEventListener("click", async () => {
 // =========================
 // IMAGE FALLBACK (FIRESTORE)
 // =========================
-const INLINE_IMAGE_MAX_BLOB_SIZE = 520 * 1024;
-const INLINE_IMAGE_MAX_DIMENSION = 1280;
+const INLINE_IMAGE_MAX_BLOB_SIZE = 420 * 1024;
+const INLINE_IMAGE_MAX_DIMENSION = 1200;
 
 function blobToDataURL(blob) {
     return new Promise((resolve, reject) => {
@@ -578,11 +578,25 @@ async function uploadAndSend(file, imageOnly = false) {
 
     const targetChatId = currentChatId;
     const replyData = activeReply ? { ...activeReply } : null;
-    const safeName = sanitizeFileName(file.name);
-    const storagePath = `chat-files/${targetChatId}/${user.uid}/${Date.now()}_${safeName}`;
-    const storageRef = ref(storage, storagePath);
+
     try {
         setComposerDisabled(true);
+
+        // Gambar langsung dikompres dan disimpan ke Firestore.
+        // Cara ini tidak bergantung pada Firebase Storage/Blaze.
+        if (imageOnly) {
+            await sendImageThroughFirestore(file, user, targetChatId, replyData);
+            clearReply();
+            if (targetChatId === currentChatId) scrollToBottom();
+            showToast("Gambar berhasil dikirim.", "success");
+            return;
+        }
+
+        // File non-gambar tetap memakai Firebase Storage.
+        const safeName = sanitizeFileName(file.name);
+        const storagePath = `chat-files/${targetChatId}/${user.uid}/${Date.now()}_${safeName}`;
+        const storageRef = ref(storage, storagePath);
+
         updateUploadProgress(0, `Menyiapkan ${file.name}...`);
 
         const uploadTask = uploadBytesResumable(storageRef, file, {
@@ -609,8 +623,6 @@ async function uploadAndSend(file, imageOnly = false) {
         });
 
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        const isImage = isImageFile(file);
-
         updateUploadProgress(100, "Menyimpan pesan...");
 
         await addDoc(collection(db, "messages"), {
@@ -621,41 +633,39 @@ async function uploadAndSend(file, imageOnly = false) {
                 name: file.name,
                 type: file.type || "application/octet-stream",
                 size: file.size,
-                isImage,
+                isImage: false,
                 storagePath
             }
         });
 
         clearReply();
         if (targetChatId === currentChatId) scrollToBottom();
+        showToast("File berhasil dikirim.", "success");
     } catch (error) {
-        console.error("Upload Storage gagal:", error);
+        console.error(imageOnly ? "Upload gambar gagal:" : "Upload file gagal:", error);
 
-        if (imageOnly && shouldUseImageFallback(error)) {
-            try {
-                await sendImageThroughFirestore(file, user, targetChatId, replyData);
-                clearReply();
-                if (targetChatId === currentChatId) scrollToBottom();
-                return;
-            } catch (fallbackError) {
-                console.error("Fallback gambar ke Firestore gagal:", fallbackError);
-                alert(
-                    `Gambar gagal dikirim.\n\n` +
-                    `Storage: ${error.code || error.message || "tidak tersedia"}\n` +
-                    `Fallback: ${fallbackError.message || "gagal menyimpan gambar"}`
-                );
-                return;
+        const code = String(error?.code || "");
+        const message = String(error?.message || "");
+
+        if (imageOnly) {
+            let detail = "Periksa Firestore Rules dan koneksi internet.";
+
+            if (code.includes("permission-denied")) {
+                detail = "Firestore menolak akses. Publish file firestore.rules yang disertakan.";
+            } else if (code.includes("resource-exhausted") || message.toLowerCase().includes("too large")) {
+                detail = "Gambar masih terlalu besar setelah dikompres. Pilih gambar lain atau perkecil resolusinya.";
             }
-        }
 
-        const code = error?.code ? ` (${error.code})` : "";
-        alert(
-            `Upload file gagal${code}. ` +
-            `Pastikan Firebase Storage aktif, Rules sudah dipublish, dan project menggunakan paket Blaze.`
-        );
+            alert(`Gambar gagal dikirim.\n\n${detail}\n${code || message}`);
+        } else {
+            alert(
+                `Upload file gagal${code ? ` (${code})` : ""}. ` +
+                `Upload file non-gambar masih memerlukan Firebase Storage dan paket Blaze.`
+            );
+        }
     } finally {
         setComposerDisabled(false);
-        window.setTimeout(hideUploadProgress, 500);
+        window.setTimeout(hideUploadProgress, 700);
         if (imageInput) imageInput.value = "";
         if (fileInput) fileInput.value = "";
     }
