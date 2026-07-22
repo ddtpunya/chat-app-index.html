@@ -15,15 +15,16 @@ import {
     collection,
     onSnapshot,
     query,
-    where
+    where,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260723-reply-upload-bar-fix-v3";
+import { auth, db } from "./firebase.js?v=20260723-presence-read-receipts-v4";
 
 // Tambahkan email lain ke daftar ini agar mereka dapat login dan muncul
 // sebagai pilihan private chat / anggota grup.
 const ALLOWED_EMAILS = [
-    "anthonyan4556@gmail.com"
+    "antho56@gmail.com"
 ];
 
 const loginBtn = document.getElementById("loginBtn");
@@ -46,6 +47,11 @@ let directoryMode = "all";
 let activeChatId = "global";
 let unsubscribeUsers = null;
 let unsubscribeGroups = null;
+let presenceHeartbeatTimer = null;
+let directoryClockTimer = null;
+
+const PRESENCE_HEARTBEAT_MS = 60 * 1000;
+const ONLINE_FRESHNESS_MS = 4 * 60 * 1000;
 
 function escapeHTML(value = "") {
     return String(value)
@@ -70,6 +76,106 @@ function safeImageURL(value, fallbackName = "User") {
 function directChatId(uidA, uidB) {
     return uidA < uidB ? `${uidA}_${uidB}` : `${uidB}_${uidA}`;
 }
+
+function timestampToDate(value) {
+    if (!value) return null;
+    if (typeof value.toDate === "function") return value.toDate();
+    if (value instanceof Date) return value;
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getPresenceDate(user = {}) {
+    return timestampToDate(user.presenceUpdatedAt)
+        || timestampToDate(user.lastSeen)
+        || timestampToDate(user.lastLogin);
+}
+
+function isUserOnline(user = {}) {
+    if (user.presenceState !== "online") return false;
+    const updatedAt = getPresenceDate(user);
+    return Boolean(updatedAt && (Date.now() - updatedAt.getTime()) <= ONLINE_FRESHNESS_MS);
+}
+
+function formatLastSeen(user = {}) {
+    if (isUserOnline(user)) return "Online";
+
+    const date = getPresenceDate(user);
+    if (!date) return "Offline";
+
+    const diffMs = Math.max(0, Date.now() - date.getTime());
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+
+    if (diffMs < minute) return "Terakhir dilihat baru saja";
+    if (diffMs < hour) return `Terakhir dilihat ${Math.floor(diffMs / minute)} menit lalu`;
+
+    const time = date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":");
+    if (diffMs < day && date.getDate() === new Date().getDate()) {
+        return `Terakhir dilihat hari ini ${time}`;
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return `Terakhir dilihat kemarin ${time}`;
+    }
+
+    const dateText = date.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
+    return `Terakhir dilihat ${dateText}, ${time}`;
+}
+
+async function writePresence(state = "online") {
+    const user = currentUser;
+    if (!user || !isEmailAllowed(user.email)) return;
+
+    const data = {
+        presenceState: state,
+        presenceUpdatedAt: serverTimestamp()
+    };
+
+    if (state === "offline") data.lastSeen = serverTimestamp();
+
+    try {
+        await setDoc(doc(db, "users", user.uid), data, { merge: true });
+    } catch (error) {
+        console.warn("Gagal memperbarui status kehadiran:", error);
+    }
+}
+
+function stopPresenceTracking() {
+    if (presenceHeartbeatTimer) window.clearInterval(presenceHeartbeatTimer);
+    if (directoryClockTimer) window.clearInterval(directoryClockTimer);
+    presenceHeartbeatTimer = null;
+    directoryClockTimer = null;
+}
+
+function startPresenceTracking() {
+    stopPresenceTracking();
+    writePresence("online");
+
+    presenceHeartbeatTimer = window.setInterval(() => {
+        if (navigator.onLine) writePresence("online");
+    }, PRESENCE_HEARTBEAT_MS);
+
+    directoryClockTimer = window.setInterval(renderDirectory, 60 * 1000);
+}
+
+window.addEventListener("online", () => writePresence("online"));
+window.addEventListener("offline", () => writePresence("offline"));
+window.addEventListener("focus", () => writePresence("online"));
+window.addEventListener("pageshow", () => writePresence("online"));
+window.addEventListener("pagehide", () => {
+    void writePresence("offline");
+});
+window.addEventListener("beforeunload", () => {
+    void writePresence("offline");
+});
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") writePresence("online");
+});
 
 function isEmailAllowed(email) {
     if (!email) return false;
@@ -115,6 +221,7 @@ loginBtn?.addEventListener("click", async () => {
 
 logoutBtn?.addEventListener("click", async () => {
     try {
+        await writePresence("offline");
         await signOut(auth);
         location.reload();
     } catch (error) {
@@ -186,14 +293,16 @@ function createUserItem(user) {
 
     const name = user.name || user.email?.split("@")[0] || "User";
     const photo = safeImageURL(user.photo, name);
+    const online = isUserOnline(user);
+    const presenceLabel = formatLastSeen(user);
 
     item.innerHTML = `
         <img src="${escapeHTML(photo)}" alt="avatar">
         <span class="group-info">
             <span class="group-name">${escapeHTML(name)}</span>
-            <span class="group-desc">${escapeHTML(user.email || "Private Chat")}</span>
+            <span class="group-desc user-presence-text ${online ? "is-online" : "is-offline"}">${escapeHTML(presenceLabel)}</span>
         </span>
-        <span class="group-time online-indicator" title="Tersedia">●</span>
+        <span class="group-time online-indicator ${online ? "is-online" : "is-offline"}" title="${escapeHTML(presenceLabel)}">●</span>
     `;
 
     item.addEventListener("click", () => {
@@ -201,8 +310,11 @@ function createUserItem(user) {
             kind: "private",
             uid: user.uid,
             name,
-            email: user.email || "",
-            photo
+            photo,
+            presenceState: user.presenceState || "offline",
+            presenceUpdatedAt: user.presenceUpdatedAt || null,
+            lastSeen: user.lastSeen || null,
+            lastLogin: user.lastLogin || null
         });
     });
 
@@ -324,6 +436,7 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
 
     if (!user) {
+        stopPresenceTracking();
         unsubscribeUsers?.();
         unsubscribeGroups?.();
         loginPage && (loginPage.style.display = "flex");
@@ -347,7 +460,9 @@ onAuthStateChanged(auth, async (user) => {
                 name: user.displayName || user.email?.split("@")[0] || "User",
                 email: user.email || "",
                 photo: user.photoURL || "",
-                lastLogin: new Date()
+                lastLogin: serverTimestamp(),
+                presenceState: "online",
+                presenceUpdatedAt: serverTimestamp()
             },
             { merge: true }
         );
@@ -363,5 +478,6 @@ onAuthStateChanged(auth, async (user) => {
     if (myName) myName.textContent = user.displayName || user.email?.split("@")[0] || "User";
     if (myPhoto) myPhoto.src = safeImageURL(user.photoURL, user.displayName || user.email || "User");
 
+    startPresenceTracking();
     startDirectoryListeners(user);
 });

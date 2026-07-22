@@ -1993,3 +1993,59 @@ button.group-item {
         width: 100%;
     }
 }
+
+/* =========================================================
+   PRESENCE, LAST SEEN & READ RECEIPTS — V4
+   ========================================================= */
+.user-presence-text.is-online,
+.group-members.presence-online {
+    color: #59e391;
+}
+
+.user-presence-text.is-offline,
+.group-members.presence-offline {
+    color: #8fa2be;
+}
+
+.online-indicator.is-online {
+    color: #22c55e;
+    text-shadow: 0 0 8px rgba(34, 197, 94, .8);
+}
+
+.online-indicator.is-offline {
+    color: #64748b;
+    text-shadow: none;
+}
+
+.message-seen {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+}
+
+.message-seen.is-pending {
+    color: #94a3b8;
+}
+
+.message-seen.is-pending i {
+    color: #94a3b8;
+}
+
+.message-seen.is-sent {
+    color: #8fb2d5;
+}
+
+.message-seen.is-sent i {
+    color: #52d681;
+}
+
+.message-seen.is-read {
+    color: #69b8ff;
+    font-weight: 700;
+}
+
+.message-seen.is-read i {
+    color: #38a7ff;
+    filter: drop-shadow(0 0 4px rgba(56, 167, 255, .42));
+}

@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260723-reply-upload-bar-fix-v3";
+import { auth, db, storage } from "./firebase.js?v=20260723-presence-read-receipts-v4";
 import {
     collection,
     addDoc,
@@ -8,7 +8,9 @@ import {
     onSnapshot,
     getDocs,
     doc,
-    setDoc
+    setDoc,
+    writeBatch,
+    arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 import { updateProfile } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 import {
@@ -96,6 +98,10 @@ let currentRoom = {
 let currentMessageSearch = "";
 let currentOpenModal = null;
 let uploadHideTimer = null;
+let latestMessageDocs = [];
+let readReceiptBatchBusy = false;
+
+const ONLINE_FRESHNESS_MS = 4 * 60 * 1000;
 
 // =========================
 // HELPER
@@ -147,6 +153,82 @@ function formatTime(timestamp) {
         hour: "2-digit",
         minute: "2-digit"
     }).replace(".", ":");
+}
+
+
+function timestampToDate(value) {
+    if (!value) return null;
+    if (typeof value.toDate === "function") return value.toDate();
+    if (value instanceof Date) return value;
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getPresenceDate(user = {}) {
+    return timestampToDate(user.presenceUpdatedAt)
+        || timestampToDate(user.lastSeen)
+        || timestampToDate(user.lastLogin);
+}
+
+function isUserOnline(user = {}) {
+    if (user.presenceState !== "online") return false;
+    const date = getPresenceDate(user);
+    return Boolean(date && (Date.now() - date.getTime()) <= ONLINE_FRESHNESS_MS);
+}
+
+function formatPresenceLabel(user = {}) {
+    if (isUserOnline(user)) return "Online";
+
+    const date = getPresenceDate(user);
+    if (!date) return "Offline";
+
+    const diffMs = Math.max(0, Date.now() - date.getTime());
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+
+    if (diffMs < minute) return "Terakhir dilihat baru saja";
+    if (diffMs < hour) return `Terakhir dilihat ${Math.floor(diffMs / minute)} menit lalu`;
+
+    const time = date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }).replace(".", ":");
+    if (diffMs < day && date.getDate() === new Date().getDate()) {
+        return `Terakhir dilihat hari ini ${time}`;
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return `Terakhir dilihat kemarin ${time}`;
+    }
+
+    const dateText = date.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
+    return `Terakhir dilihat ${dateText}, ${time}`;
+}
+
+function setRoomMemberLabel(label, online = null) {
+    currentRoom.memberLabel = label;
+    if (!roomMembers) return;
+
+    roomMembers.textContent = label;
+    roomMembers.classList.toggle("presence-online", online === true);
+    roomMembers.classList.toggle("presence-offline", online === false);
+}
+
+function updatePrivateRoomPresence() {
+    if (currentRoom.kind !== "private" || !currentRoom.otherUserUid) return;
+
+    const users = Array.isArray(window.chatDirectoryUsers) ? window.chatDirectoryUsers : [];
+    const user = users.find((item) => item.uid === currentRoom.otherUserUid);
+    if (!user) return;
+
+    currentRoom.presenceState = user.presenceState || "offline";
+    currentRoom.presenceUpdatedAt = user.presenceUpdatedAt || null;
+    currentRoom.lastSeen = user.lastSeen || null;
+    currentRoom.lastLogin = user.lastLogin || null;
+
+    setRoomMemberLabel(formatPresenceLabel(user), isUserOnline(user));
+    refreshChatSettings();
 }
 
 function formatFileSize(bytes = 0) {
@@ -207,6 +289,7 @@ function createMessageBase(user, chatId, replyData = activeReply) {
         photo: user.photoURL || "",
         chatId,
         createdAt: serverTimestamp(),
+        readBy: [user.uid],
         replyTo: replyData ? {
             id: replyData.id,
             uid: replyData.uid,
@@ -819,6 +902,89 @@ function focusOriginalMessage(messageId) {
     window.setTimeout(() => target.classList.remove("message-highlight"), 1600);
 }
 
+function getReadBy(data = {}) {
+    const readers = Array.isArray(data.readBy) ? data.readBy.filter(Boolean) : [];
+    if (data.uid && !readers.includes(data.uid)) readers.push(data.uid);
+    return readers;
+}
+
+function renderDeliveryStatus(data = {}, hasPendingWrites = false) {
+    if (hasPendingWrites) {
+        return `
+            <div class="message-seen is-pending">
+                <i class="fa-regular fa-clock"></i>
+                mengirim...
+            </div>
+        `;
+    }
+
+    const readers = getReadBy(data).filter((uid) => uid !== data.uid);
+    let readCount = readers.length;
+
+    if (currentRoom.kind === "private" && currentRoom.otherUserUid) {
+        readCount = readers.includes(currentRoom.otherUserUid) ? 1 : 0;
+    }
+
+    if (readCount > 0) {
+        const label = currentRoom.kind === "private" ? "dibaca" : `dibaca ${readCount}`;
+        return `
+            <div class="message-seen is-read">
+                <i class="fa-solid fa-check-double"></i>
+                ${label}
+            </div>
+        `;
+    }
+
+    return `
+        <div class="message-seen is-sent">
+            <i class="fa-solid fa-check"></i>
+            terkirim
+        </div>
+    `;
+}
+
+function isChatVisibleForReadReceipt() {
+    if (document.visibilityState !== "visible") return false;
+    if (!isMobile()) return true;
+    return Boolean(document.getElementById("chatPage")?.classList.contains("mobile-chat-open"));
+}
+
+async function markMessagesAsRead(messageDocs = latestMessageDocs) {
+    const me = auth.currentUser;
+    if (!me || readReceiptBatchBusy || !isChatVisibleForReadReceipt()) return;
+
+    const unread = messageDocs.filter((messageDoc) => {
+        const data = messageDoc.data();
+        return data.uid !== me.uid && !getReadBy(data).includes(me.uid);
+    }).slice(0, 450);
+
+    if (!unread.length) return;
+
+    readReceiptBatchBusy = true;
+    try {
+        const batch = writeBatch(db);
+        unread.forEach((messageDoc) => {
+            batch.update(doc(db, "messages", messageDoc.id), {
+                readBy: arrayUnion(me.uid)
+            });
+        });
+        await batch.commit();
+    } catch (error) {
+        console.warn("Gagal memperbarui status dibaca:", error);
+    } finally {
+        readReceiptBatchBusy = false;
+    }
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        void markMessagesAsRead();
+        updatePrivateRoomPresence();
+    }
+});
+
+window.addEventListener("chat-directory-updated", updatePrivateRoomPresence);
+
 function listenToChat(chatId) {
     if (unsubscribeChat) unsubscribeChat();
 
@@ -827,7 +993,7 @@ function listenToChat(chatId) {
         where("chatId", "==", chatId)
     );
 
-    unsubscribeChat = onSnapshot(messagesQuery, (snapshot) => {
+    unsubscribeChat = onSnapshot(messagesQuery, { includeMetadataChanges: true }, (snapshot) => {
         if (!messages) return;
 
         const shouldAutoScroll = isNearBottom();
@@ -839,6 +1005,8 @@ function listenToChat(chatId) {
             return aTime - bTime;
         });
 
+        latestMessageDocs = sortedDocs;
+
         sortedDocs.forEach((messageDoc) => {
             const data = messageDoc.data();
             const me = auth.currentUser;
@@ -848,6 +1016,7 @@ function listenToChat(chatId) {
             const name = getDisplayName(data);
             const time = formatTime(data.createdAt);
             const safeText = escapeHTML(data.text || "").replace(/\n/g, "<br>");
+            const hasPendingWrites = Boolean(messageDoc.metadata?.hasPendingWrites);
 
             const row = document.createElement("div");
             row.id = `message-${messageDoc.id}`;
@@ -873,12 +1042,7 @@ function listenToChat(chatId) {
                     ${safeText ? `<div class="message-text">${safeText}</div>` : ""}
                     ${renderAttachment(data.attachment)}
 
-                    ${isMe ? `
-                        <div class="message-seen">
-                            <i class="fa-solid fa-check"></i>
-                            terkirim
-                        </div>
-                    ` : ""}
+                    ${isMe ? renderDeliveryStatus(data, hasPendingWrites) : ""}
                 </div>
 
                 <div class="message-actions">
@@ -905,6 +1069,7 @@ function listenToChat(chatId) {
         });
 
         applyMessageSearch();
+        void markMessagesAsRead(sortedDocs);
         if (shouldAutoScroll && !currentMessageSearch) scrollToBottom();
         scrollBottomBtn?.classList.toggle("show", !isNearBottom());
     }, (error) => {
@@ -1263,7 +1428,8 @@ window.openChat = function (target) {
             name: "Global Chat",
             memberLabel: userCount ? `${userCount} anggota terdaftar` : "Obrolan Publik",
             photo: roomAvatar("Global Chat"),
-            memberUids: []
+            memberUids: [],
+            otherUserUid: null
         };
     } else if (target?.kind === "group" || target?.id) {
         const name = target.name || "Grup Chat";
@@ -1276,7 +1442,8 @@ window.openChat = function (target) {
             memberLabel: `${Math.max(memberUids.length, 1)} anggota`,
             photo: safeURL(target.photo) || roomAvatar(name, "7c3aed"),
             memberUids,
-            createdBy: target.createdBy || ""
+            createdBy: target.createdBy || "",
+            otherUserUid: null
         };
     } else {
         const otherUser = target || {};
@@ -1289,15 +1456,25 @@ window.openChat = function (target) {
             kind: "private",
             chatId,
             name,
-            memberLabel: otherUser.email || "Private chat",
+            memberLabel: formatPresenceLabel(otherUser),
             photo: avatarURL(otherUser),
-            memberUids: [me.uid, otherUser.uid].filter(Boolean)
+            memberUids: [me.uid, otherUser.uid].filter(Boolean),
+            otherUserUid: otherUser.uid || "",
+            presenceState: otherUser.presenceState || "offline",
+            presenceUpdatedAt: otherUser.presenceUpdatedAt || null,
+            lastSeen: otherUser.lastSeen || null,
+            lastLogin: otherUser.lastLogin || null
         };
     }
 
     currentChatId = currentRoom.chatId;
+    latestMessageDocs = [];
     if (roomName) roomName.textContent = currentRoom.name;
-    if (roomMembers) roomMembers.textContent = currentRoom.memberLabel;
+    if (currentRoom.kind === "private") {
+        setRoomMemberLabel(currentRoom.memberLabel, isUserOnline(currentRoom));
+    } else {
+        setRoomMemberLabel(currentRoom.memberLabel, null);
+    }
     if (chatGroupAvatar) chatGroupAvatar.src = currentRoom.photo;
 
     refreshChatSettings();
