@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260723-presence-read-receipts-v4";
+import { auth, db, storage } from "./firebase.js?v=20260723-image-gallery-zoom-v7";
 import {
     collection,
     addDoc,
@@ -72,6 +72,19 @@ const copyRoomIdBtn = document.getElementById("copyRoomIdBtn");
 const clearRoomSearchBtn = document.getElementById("clearRoomSearchBtn");
 const modalBackdrop = document.getElementById("modalBackdrop");
 const toastContainer = document.getElementById("toastContainer");
+const imagePreviewModal = document.getElementById("imagePreviewModal");
+const imagePreviewFull = document.getElementById("imagePreviewFull");
+const imagePreviewMeta = document.getElementById("imagePreviewMeta");
+const imagePreviewStage = document.getElementById("imagePreviewStage");
+const imagePreviewPanArea = document.getElementById("imagePreviewPanArea");
+const imagePreviewCanvas = document.getElementById("imagePreviewCanvas");
+const imagePreviewPrevBtn = document.getElementById("imagePreviewPrevBtn");
+const imagePreviewNextBtn = document.getElementById("imagePreviewNextBtn");
+const imagePreviewZoomOutBtn = document.getElementById("imagePreviewZoomOutBtn");
+const imagePreviewZoomInBtn = document.getElementById("imagePreviewZoomInBtn");
+const imagePreviewResetBtn = document.getElementById("imagePreviewResetBtn");
+const imagePreviewScaleLabel = document.getElementById("imagePreviewScaleLabel");
+const imagePreviewCounter = document.getElementById("imagePreviewCounter");
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const EMOJIS = [
@@ -101,6 +114,18 @@ let uploadHideTimer = null;
 let latestMessageDocs = [];
 let readReceiptBatchBusy = false;
 
+let previewGallery = [];
+let previewIndex = -1;
+let previewScale = 1;
+let previewBaseWidth = 1;
+let previewBaseHeight = 1;
+let previewSwipeStartX = null;
+let previewSwipeStartY = null;
+let previewSwipePointerId = null;
+
+const PREVIEW_SCALE_MIN = 0.5;
+const PREVIEW_SCALE_MAX = 4;
+const PREVIEW_SCALE_STEP = 0.25;
 const ONLINE_FRESHNESS_MS = 4 * 60 * 1000;
 
 // =========================
@@ -862,15 +887,18 @@ function renderAttachment(attachment) {
     const size = escapeHTML(formatFileSize(Number(attachment.size) || 0));
 
     if (attachment.isImage || String(attachment.type || "").startsWith("image/")) {
-        const imageMarkup = `
-            <img class="message-image" src="${escapeHTML(url)}" alt="${name}" loading="lazy">
-        `;
-
         return `
-            ${attachment.inlineFirestore
-                ? `<div class="message-image-link inline-image">${imageMarkup}</div>`
-                : `<a class="message-image-link" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${imageMarkup}</a>`
-            }
+            <button
+                class="message-image-link image-preview-trigger ${attachment.inlineFirestore ? "inline-image" : ""}"
+                type="button"
+                data-preview-url="${escapeHTML(url)}"
+                data-preview-name="${name}"
+                data-preview-size="${size}"
+                title="Klik untuk preview gambar"
+            >
+                <img class="message-image" src="${escapeHTML(url)}" alt="${name}" loading="lazy">
+                <span class="image-preview-hint">Klik untuk perbesar</span>
+            </button>
             <div class="attachment-caption">
                 <span>${name}</span>
                 ${size ? `<span>${size}</span>` : ""}
@@ -889,6 +917,207 @@ function renderAttachment(attachment) {
         </a>
     `;
 }
+
+function collectPreviewGallery() {
+    return Array.from(messages?.querySelectorAll(".image-preview-trigger") || [])
+        .map((button) => ({
+            button,
+            url: button.dataset.previewUrl || "",
+            name: button.dataset.previewName || "Gambar",
+            size: button.dataset.previewSize || ""
+        }))
+        .filter((item) => Boolean(item.url));
+}
+
+function clampPreviewScale(value) {
+    return Math.min(PREVIEW_SCALE_MAX, Math.max(PREVIEW_SCALE_MIN, value));
+}
+
+function centerPreviewStage() {
+    if (!imagePreviewStage) return;
+
+    requestAnimationFrame(() => {
+        imagePreviewStage.scrollTo({
+            left: Math.max(0, (imagePreviewStage.scrollWidth - imagePreviewStage.clientWidth) / 2),
+            top: Math.max(0, (imagePreviewStage.scrollHeight - imagePreviewStage.clientHeight) / 2),
+            behavior: "auto"
+        });
+    });
+}
+
+function applyPreviewScale({ center = true } = {}) {
+    if (!imagePreviewStage || !imagePreviewPanArea || !imagePreviewCanvas || !imagePreviewFull) return;
+
+    previewScale = clampPreviewScale(previewScale);
+    const width = Math.max(1, Math.round(previewBaseWidth * previewScale));
+    const height = Math.max(1, Math.round(previewBaseHeight * previewScale));
+    const padding = 32;
+
+    imagePreviewCanvas.style.width = `${width}px`;
+    imagePreviewCanvas.style.height = `${height}px`;
+    imagePreviewPanArea.style.width = `${Math.max(imagePreviewStage.clientWidth, width + padding)}px`;
+    imagePreviewPanArea.style.height = `${Math.max(imagePreviewStage.clientHeight, height + padding)}px`;
+
+    if (imagePreviewScaleLabel) {
+        imagePreviewScaleLabel.textContent = `${Math.round(previewScale * 100)}%`;
+    }
+    if (imagePreviewZoomOutBtn) {
+        imagePreviewZoomOutBtn.disabled = previewScale <= PREVIEW_SCALE_MIN + 0.001;
+    }
+    if (imagePreviewZoomInBtn) {
+        imagePreviewZoomInBtn.disabled = previewScale >= PREVIEW_SCALE_MAX - 0.001;
+    }
+
+    if (center) centerPreviewStage();
+}
+
+function fitPreviewImage() {
+    if (!imagePreviewStage || !imagePreviewFull) return;
+
+    const naturalWidth = imagePreviewFull.naturalWidth || 1;
+    const naturalHeight = imagePreviewFull.naturalHeight || 1;
+    const availableWidth = Math.max(240, imagePreviewStage.clientWidth - 36);
+    const availableHeight = Math.max(220, imagePreviewStage.clientHeight - 36);
+    const fitRatio = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
+
+    previewBaseWidth = Math.max(1, Math.round(naturalWidth * fitRatio));
+    previewBaseHeight = Math.max(1, Math.round(naturalHeight * fitRatio));
+    previewScale = 1;
+    applyPreviewScale();
+}
+
+function setPreviewScale(nextScale, options = {}) {
+    previewScale = clampPreviewScale(nextScale);
+    applyPreviewScale(options);
+}
+
+function updatePreviewNavigation() {
+    const total = previewGallery.length;
+    const multiple = total > 1;
+
+    if (imagePreviewCounter) {
+        imagePreviewCounter.textContent = total ? `${previewIndex + 1} / ${total}` : "0 / 0";
+    }
+    if (imagePreviewPrevBtn) imagePreviewPrevBtn.disabled = !multiple;
+    if (imagePreviewNextBtn) imagePreviewNextBtn.disabled = !multiple;
+}
+
+function showPreviewImage(index) {
+    if (!imagePreviewFull || !previewGallery.length) return;
+
+    previewIndex = (index + previewGallery.length) % previewGallery.length;
+    const item = previewGallery[previewIndex];
+
+    previewScale = 1;
+    previewBaseWidth = 1;
+    previewBaseHeight = 1;
+    imagePreviewFull.alt = item.name || "Preview gambar";
+    imagePreviewFull.onload = fitPreviewImage;
+    imagePreviewFull.src = item.url;
+
+    if (imagePreviewMeta) {
+        imagePreviewMeta.textContent = [item.name, item.size].filter(Boolean).join(" · ") || "Klik di luar untuk menutup.";
+    }
+
+    updatePreviewNavigation();
+}
+
+function openImagePreview(url = "", name = "Gambar", size = "", triggerButton = null) {
+    if (!imagePreviewModal || !imagePreviewFull) return;
+
+    previewGallery = collectPreviewGallery();
+    previewIndex = previewGallery.findIndex((item) => item.button === triggerButton);
+
+    if (previewIndex < 0) {
+        previewIndex = previewGallery.findIndex((item) => item.url === url && item.name === name);
+    }
+
+    if (previewIndex < 0) {
+        previewGallery.push({ button: triggerButton, url, name, size });
+        previewIndex = previewGallery.length - 1;
+    }
+
+    openModal(imagePreviewModal);
+    showPreviewImage(previewIndex);
+}
+
+function showPreviousPreviewImage() {
+    if (previewGallery.length > 1) showPreviewImage(previewIndex - 1);
+}
+
+function showNextPreviewImage() {
+    if (previewGallery.length > 1) showPreviewImage(previewIndex + 1);
+}
+
+function clearImagePreview() {
+    if (imagePreviewFull) {
+        imagePreviewFull.onload = null;
+        imagePreviewFull.src = "";
+        imagePreviewFull.alt = "Preview gambar";
+    }
+    if (imagePreviewMeta) {
+        imagePreviewMeta.textContent = "Klik di luar untuk menutup.";
+    }
+    if (imagePreviewCanvas) {
+        imagePreviewCanvas.style.width = "1px";
+        imagePreviewCanvas.style.height = "1px";
+    }
+    if (imagePreviewPanArea) {
+        imagePreviewPanArea.style.width = "100%";
+        imagePreviewPanArea.style.height = "100%";
+    }
+
+    previewGallery = [];
+    previewIndex = -1;
+    previewScale = 1;
+    previewBaseWidth = 1;
+    previewBaseHeight = 1;
+    updatePreviewNavigation();
+    if (imagePreviewScaleLabel) imagePreviewScaleLabel.textContent = "100%";
+}
+
+imagePreviewPrevBtn?.addEventListener("click", showPreviousPreviewImage);
+imagePreviewNextBtn?.addEventListener("click", showNextPreviewImage);
+imagePreviewZoomOutBtn?.addEventListener("click", () => setPreviewScale(previewScale - PREVIEW_SCALE_STEP));
+imagePreviewZoomInBtn?.addEventListener("click", () => setPreviewScale(previewScale + PREVIEW_SCALE_STEP));
+imagePreviewResetBtn?.addEventListener("click", () => setPreviewScale(1));
+
+imagePreviewFull?.addEventListener("dblclick", () => {
+    setPreviewScale(previewScale > 1 ? 1 : 2);
+});
+
+imagePreviewStage?.addEventListener("pointerdown", (event) => {
+    if (event.pointerType !== "touch" || previewScale > 1.05) return;
+    previewSwipePointerId = event.pointerId;
+    previewSwipeStartX = event.clientX;
+    previewSwipeStartY = event.clientY;
+});
+
+imagePreviewStage?.addEventListener("pointerup", (event) => {
+    if (event.pointerId !== previewSwipePointerId || previewSwipeStartX === null || previewSwipeStartY === null) return;
+
+    const deltaX = event.clientX - previewSwipeStartX;
+    const deltaY = event.clientY - previewSwipeStartY;
+    previewSwipeStartX = null;
+    previewSwipeStartY = null;
+    previewSwipePointerId = null;
+
+    if (Math.abs(deltaX) < 55 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2) return;
+    if (deltaX < 0) showNextPreviewImage();
+    else showPreviousPreviewImage();
+});
+
+imagePreviewStage?.addEventListener("pointercancel", () => {
+    previewSwipeStartX = null;
+    previewSwipeStartY = null;
+    previewSwipePointerId = null;
+});
+
+window.addEventListener("resize", () => {
+    if (currentOpenModal === imagePreviewModal && imagePreviewFull?.complete && imagePreviewFull.naturalWidth) {
+        fitPreviewImage();
+    }
+});
 
 function focusOriginalMessage(messageId) {
     if (!messageId) return;
@@ -1065,6 +1294,18 @@ function listenToChat(chatId) {
                 focusOriginalMessage(data.replyTo?.id);
             });
 
+            row.querySelector(".image-preview-trigger")?.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const button = event.currentTarget;
+                openImagePreview(
+                    button?.dataset.previewUrl || "",
+                    button?.dataset.previewName || "Gambar",
+                    button?.dataset.previewSize || "",
+                    button
+                );
+            });
+
             messages.appendChild(row);
         });
 
@@ -1125,6 +1366,10 @@ function closeModal() {
     document.body.classList.remove("modal-open");
     currentOpenModal = null;
 
+    if (modal === imagePreviewModal) {
+        window.setTimeout(clearImagePreview, 180);
+    }
+
     window.setTimeout(() => {
         modal.hidden = true;
         if (modalBackdrop) modalBackdrop.hidden = true;
@@ -1137,9 +1382,31 @@ document.querySelectorAll("[data-close-modal]").forEach((button) => {
 });
 
 document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && currentOpenModal) {
+    if (!currentOpenModal) return;
+
+    if (event.key === "Escape") {
         event.preventDefault();
         closeModal();
+        return;
+    }
+
+    if (currentOpenModal !== imagePreviewModal) return;
+
+    if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        showPreviousPreviewImage();
+    } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        showNextPreviewImage();
+    } else if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        setPreviewScale(previewScale + PREVIEW_SCALE_STEP);
+    } else if (event.key === "-") {
+        event.preventDefault();
+        setPreviewScale(previewScale - PREVIEW_SCALE_STEP);
+    } else if (event.key === "0") {
+        event.preventDefault();
+        setPreviewScale(1);
     }
 });
 

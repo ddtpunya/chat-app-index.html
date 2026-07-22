@@ -32,12 +32,20 @@
         }
     })();
     </script>
-    <link rel="stylesheet" href="style.css?v=20260723-presence-read-receipts-v4">
+    <link rel="stylesheet" href="style.css?v=20260723-image-gallery-zoom-v7">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 
-<div id="loginPage">
+<div id="authLoadingPage" class="auth-loading-page">
+    <div class="auth-loading-card">
+        <span class="auth-loading-spinner" aria-hidden="true"></span>
+        <strong>Memulihkan sesi...</strong>
+        <small>Mohon tunggu sebentar</small>
+    </div>
+</div>
+
+<div id="loginPage" style="display:none;">
     <div class="login-card">
         <h1>CHAT DDT</h1>
         <p>Realtime Group Chat</p>
@@ -286,10 +294,64 @@
     </div>
 </section>
 
+<section id="imagePreviewModal" class="app-modal image-preview-modal" hidden role="dialog" aria-modal="true" aria-labelledby="imagePreviewTitle">
+    <div class="modal-card image-preview-card">
+        <div class="modal-header image-preview-header">
+            <div class="image-preview-heading">
+                <h2 id="imagePreviewTitle">Preview Gambar</h2>
+                <p id="imagePreviewMeta">Klik di luar untuk menutup.</p>
+            </div>
+            <button class="modal-close-btn" type="button" data-close-modal title="Tutup">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="image-preview-toolbar" aria-label="Kontrol preview gambar">
+            <button id="imagePreviewPrevBtn" class="preview-tool-btn" type="button" title="Gambar sebelumnya">
+                <i class="fa-solid fa-chevron-left"></i>
+                <span class="preview-tool-label">Sebelumnya</span>
+            </button>
+
+            <div class="preview-zoom-controls">
+                <button id="imagePreviewZoomOutBtn" class="preview-tool-btn icon-only" type="button" title="Perkecil">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button id="imagePreviewResetBtn" class="preview-scale-btn" type="button" title="Reset zoom">
+                    <span id="imagePreviewScaleLabel">100%</span>
+                </button>
+                <button id="imagePreviewZoomInBtn" class="preview-tool-btn icon-only" type="button" title="Perbesar">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <div class="preview-position" aria-live="polite">
+                <span id="imagePreviewCounter">1 / 1</span>
+            </div>
+
+            <button id="imagePreviewNextBtn" class="preview-tool-btn" type="button" title="Gambar berikutnya">
+                <span class="preview-tool-label">Berikutnya</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div id="imagePreviewStage" class="image-preview-stage">
+            <div id="imagePreviewPanArea" class="image-preview-pan-area">
+                <div id="imagePreviewCanvas" class="image-preview-canvas">
+                    <img id="imagePreviewFull" class="image-preview-full" src="" alt="Preview gambar" draggable="false">
+                </div>
+            </div>
+        </div>
+
+        <div class="image-preview-mobile-hint">
+            Geser kiri/kanan untuk pindah gambar. Gunakan tombol +/− untuk zoom.
+        </div>
+    </div>
+</section>
+
 <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-<script type="module" src="firebase.js?v=20260723-presence-read-receipts-v4"></script>
-<script type="module" src="auth.js?v=20260723-presence-read-receipts-v4"></script>
-<script type="module" src="app.js?v=20260723-presence-read-receipts-v4"></script>
+<script type="module" src="firebase.js?v=20260723-image-gallery-zoom-v7"></script>
+<script type="module" src="auth.js?v=20260723-image-gallery-zoom-v7"></script>
+<script type="module" src="app.js?v=20260723-image-gallery-zoom-v7"></script>
 </body>
 </html>
