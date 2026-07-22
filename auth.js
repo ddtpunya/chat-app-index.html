@@ -17,15 +17,12 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260723-session-restore-fix-v8";
+import { auth, db } from "./firebase.js?v=20260723-friends-only-private-v9";
 
 // Tambahkan email lain ke daftar ini agar mereka dapat login dan muncul
 // sebagai pilihan private chat / anggota grup.
 const ALLOWED_EMAILS = [
-    "verensmb@gmail.com",
-    "anthonyan4556@gmail.com",
-    "verenlim49@gmail.com",
-    "anthonywian4@gmail.com",
+    "antho56@gmail.com"
 ];
 
 const loginBtn = document.getElementById("loginBtn");
@@ -44,10 +41,12 @@ provider.setCustomParameters({ prompt: "select_account" });
 let currentUser = null;
 let directoryUsers = [];
 let directoryGroups = [];
+let directoryFriendships = [];
 let directoryMode = "all";
 let activeChatId = "global";
 let unsubscribeUsers = null;
 let unsubscribeGroups = null;
+let unsubscribeFriendships = null;
 let presenceHeartbeatTimer = null;
 let directoryClockTimer = null;
 
@@ -76,6 +75,20 @@ function safeImageURL(value, fallbackName = "User") {
 
 function directChatId(uidA, uidB) {
     return uidA < uidB ? `${uidA}_${uidB}` : `${uidB}_${uidA}`;
+}
+
+function getAcceptedFriendUidSet() {
+    const accepted = new Set();
+    if (!currentUser) return accepted;
+
+    directoryFriendships.forEach((friendship) => {
+        if (friendship.status !== "accepted") return;
+        const members = Array.isArray(friendship.userUids) ? friendship.userUids : [];
+        const otherUid = members.find((uid) => uid && uid !== currentUser.uid);
+        if (otherUid) accepted.add(otherUid);
+    });
+
+    return accepted;
 }
 
 function timestampToDate(value) {
@@ -417,11 +430,13 @@ function renderDirectory() {
     }
 
     if (directoryMode === "all") {
+        const acceptedFriendUids = getAcceptedFriendUidSet();
+
         directoryUsers
-            .filter((user) => user.uid !== currentUser.uid)
+            .filter((user) => user.uid !== currentUser.uid && acceptedFriendUids.has(user.uid))
             .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "id"))
             .forEach((user) => {
-                if (!matchesSearch(user.name || "", user.email || "", "private chat")) return;
+                if (!matchesSearch(user.name || "", "teman", "private chat")) return;
                 userList.appendChild(createUserItem(user));
                 visibleCount += 1;
             });
@@ -430,16 +445,21 @@ function renderDirectory() {
     if (!visibleCount) {
         const empty = document.createElement("div");
         empty.className = "directory-empty";
-        empty.innerHTML = `<i class="fa-regular fa-folder-open"></i><span>Tidak ada hasil.</span>`;
+        empty.innerHTML = `<i class="fa-regular fa-folder-open"></i><span>Tidak ada hasil. Tambahkan teman melalui tombol Teman.</span>`;
         userList.appendChild(empty);
     }
 
     userList.querySelector(`[data-chat-id="${CSS.escape(activeChatId)}"]`)?.classList.add("active");
 
+    const acceptedFriendUids = getAcceptedFriendUidSet();
     window.chatDirectoryUsers = directoryUsers.slice();
     window.chatDirectoryGroups = directoryGroups.slice();
+    window.chatDirectoryFriendships = directoryFriendships.slice();
+    window.chatFriendUidSet = acceptedFriendUids;
     window.chatDirectoryUserCount = directoryUsers.length;
+    window.chatFriendCount = acceptedFriendUids.size;
     window.dispatchEvent(new CustomEvent("chat-directory-updated"));
+    window.dispatchEvent(new CustomEvent("chat-friendships-updated"));
 }
 
 sidebarSearchInput?.addEventListener("input", renderDirectory);
@@ -461,6 +481,7 @@ window.setActiveSidebarChat = (chatId) => {
 function startDirectoryListeners(user) {
     unsubscribeUsers?.();
     unsubscribeGroups?.();
+    unsubscribeFriendships?.();
 
     unsubscribeUsers = onSnapshot(
         collection(db, "users"),
@@ -497,6 +518,24 @@ function startDirectoryListeners(user) {
             renderDirectory();
         }
     );
+
+    const friendshipsQuery = query(
+        collection(db, "friendships"),
+        where("userUids", "array-contains", user.uid)
+    );
+
+    unsubscribeFriendships = onSnapshot(
+        friendshipsQuery,
+        (snapshot) => {
+            directoryFriendships = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+            renderDirectory();
+        },
+        (error) => {
+            console.error("Gagal mengambil daftar pertemanan:", error);
+            directoryFriendships = [];
+            renderDirectory();
+        }
+    );
 }
 
 async function handleAuthStateChange(user) {
@@ -507,6 +546,8 @@ async function handleAuthStateChange(user) {
         stopPresenceTracking();
         unsubscribeUsers?.();
         unsubscribeGroups?.();
+        unsubscribeFriendships?.();
+        directoryFriendships = [];
         if (loginPage) loginPage.style.display = "flex";
         if (chatPage) chatPage.style.display = "none";
         return;

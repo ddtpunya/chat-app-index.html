@@ -1,21 +1,19 @@
-CHAT DDT — Image Gallery & Zoom v7
+CHAT DDT – Friends Only Private Chat v9
 
-Perubahan:
-- Klik gambar membuka preview besar.
-- Zoom 50% sampai 400% dengan tombol + dan -.
-- Tombol 100% untuk reset zoom.
-- Tombol Sebelumnya/Berikutnya untuk semua gambar di ruang chat aktif.
-- Swipe kiri/kanan pada layar sentuh saat zoom 100%.
-- Keyboard: panah kiri/kanan, +, -, 0, dan Escape.
-- Double-click gambar untuk beralih 100% / 200%.
-- Tidak memerlukan perubahan Firestore Rules.
+Perubahan utama:
+- Private chat hanya tampil untuk user yang status pertemanannya "accepted".
+- Tombol Teman untuk mengirim, menerima, menolak, membatalkan, dan menghapus pertemanan.
+- Badge merah menunjukkan jumlah permintaan masuk.
+- Group member picker hanya menampilkan teman.
+- Firestore Rules melindungi private message berdasarkan dokumen friendships.
+- Semua fitur v8 tetap dipertahankan: session restore, presence, last seen, read receipt, reply, upload gambar, preview/zoom/gallery.
 
-Versi cache: 20260723-session-restore-fix-v8
+WAJIB:
+1. Timpa seluruh file website dengan versi v9.
+2. Publish firestore.rules v9 di Firebase Console.
+3. Ctrl+F5 satu kali.
+4. Kedua user harus login, lalu salah satu mengirim permintaan dan user lain menekan Terima.
 
-
-=== SESSION RESTORE FIX v8 ===
-- Auth observer dipasang sebelum getRedirectResult.
-- getRedirectResult dan authStateReady tidak lagi memblokir UI.
-- Layar Memulihkan sesi memiliki timeout 6,5 detik.
-- LocalStorage diprioritaskan agar sesi setelah F5 lebih cepat dipulihkan.
-- Tidak memerlukan perubahan Firestore Rules atau Storage Rules.
+Catatan:
+- Pesan private lama tetap tersimpan, tetapi baru dapat dibaca setelah kedua akun berteman.
+- Saat pertemanan dihapus, private chat langsung hilang dan akses pesan private ditutup oleh rules.

@@ -32,7 +32,7 @@
         }
     })();
     </script>
-    <link rel="stylesheet" href="style.css?v=20260723-session-restore-fix-v8">
+    <link rel="stylesheet" href="style.css?v=20260723-friends-only-private-v9">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -83,13 +83,19 @@
         <div class="sidebar-search-wrap">
             <label class="search-box" for="sidebarSearchInput">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input id="sidebarSearchInput" type="search" placeholder="Cari user atau grup..." autocomplete="off">
+                <input id="sidebarSearchInput" type="search" placeholder="Cari teman atau grup..." autocomplete="off">
             </label>
         </div>
 
         <button id="groupsBtn" class="groups-btn" type="button" aria-pressed="false">
             <i class="fa-regular fa-message"></i>
             <span class="button-label">Groups</span>
+        </button>
+
+        <button id="friendsBtn" class="friends-btn" type="button" title="Kelola teman">
+            <i class="fa-solid fa-user-group"></i>
+            <span class="button-label">Teman</span>
+            <span id="friendRequestBadge" class="friend-request-badge" hidden>0</span>
         </button>
 
         <button id="createGroupBtn" class="create-group-btn" type="button">
@@ -191,6 +197,31 @@
 </div>
 
 <div id="modalBackdrop" class="modal-backdrop" hidden></div>
+
+<section id="friendsModal" class="app-modal" hidden role="dialog" aria-modal="true" aria-labelledby="friendsModalTitle">
+    <div class="modal-card friend-manager-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="friendsModalTitle">Teman & Permintaan</h2>
+                <p>Private chat hanya muncul setelah permintaan diterima.</p>
+            </div>
+            <button class="modal-close-btn" type="button" data-close-modal title="Tutup">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <label class="friend-search-box" for="friendSearchInput">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="friendSearchInput" type="search" placeholder="Cari nama user..." autocomplete="off">
+            </label>
+            <div id="friendSummary" class="friend-summary">Memuat daftar pertemanan...</div>
+            <div id="friendManagementList" class="friend-management-list" aria-live="polite"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-btn" type="button" data-close-modal>Selesai</button>
+        </div>
+    </div>
+</section>
 
 <section id="createGroupModal" class="app-modal" hidden role="dialog" aria-modal="true" aria-labelledby="createGroupTitle">
     <form id="createGroupForm" class="modal-card">
@@ -350,8 +381,8 @@
 
 <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-<script type="module" src="firebase.js?v=20260723-session-restore-fix-v8"></script>
-<script type="module" src="auth.js?v=20260723-session-restore-fix-v8"></script>
-<script type="module" src="app.js?v=20260723-session-restore-fix-v8"></script>
+<script type="module" src="firebase.js?v=20260723-friends-only-private-v9"></script>
+<script type="module" src="auth.js?v=20260723-friends-only-private-v9"></script>
+<script type="module" src="app.js?v=20260723-friends-only-private-v9"></script>
 </body>
 </html>
