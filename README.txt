@@ -1,19 +1,30 @@
-CHAT DDT – Friends Only Private Chat v9
+CHAT DDT – Private Search Gmail v10
 
 Perubahan utama:
-- Private chat hanya tampil untuk user yang status pertemanannya "accepted".
-- Tombol Teman untuk mengirim, menerima, menolak, membatalkan, dan menghapus pertemanan.
-- Badge merah menunjukkan jumlah permintaan masuk.
-- Group member picker hanya menampilkan teman.
-- Firestore Rules melindungi private message berdasarkan dokumen friendships.
-- Semua fitur v8 tetap dipertahankan: session restore, presence, last seen, read receipt, reply, upload gambar, preview/zoom/gallery.
+- Tidak ada lagi daftar seluruh akun atau pilihan Gmail.
+- Tambah teman hanya melalui alamat Gmail lengkap lalu tekan tombol Cari.
+- Pencarian menggunakan exact document lookup; Firestore menolak list/query collection users dan email_lookup.
+- Hasil pencarian hanya menampilkan satu akun yang cocok dan tidak menampilkan alamat emailnya.
+- Daftar di modal Teman hanya berisi teman, permintaan masuk, dan permintaan keluar yang memang terkait.
+- Sidebar hanya menampilkan nama teman serta status online/offline/last seen.
+- Pemilih anggota grup hanya menampilkan teman yang sudah terkait.
+- Email tidak lagi disimpan pada dokumen profil users atau pesan baru.
+- Semua fitur sebelumnya tetap dipertahankan: private chat khusus teman, session restore, presence, last seen, read receipt, reply, upload gambar, preview, zoom, dan gallery.
 
 WAJIB:
-1. Timpa seluruh file website dengan versi v9.
-2. Publish firestore.rules v9 di Firebase Console.
-3. Ctrl+F5 satu kali.
-4. Kedua user harus login, lalu salah satu mengirim permintaan dan user lain menekan Terima.
+1. Timpa seluruh file website dengan versi v10.
+2. Publish firestore.rules v10 di Firebase Console.
+3. Upload/publish website lalu tekan Ctrl+F5 satu kali.
+4. Setiap akun yang boleh dicari harus membuka atau refresh CHAT DDT setidaknya satu kali setelah v10 dan rules dipasang. Langkah ini membuat exact email lookup milik akun tersebut.
 
-Catatan:
-- Pesan private lama tetap tersimpan, tetapi baru dapat dibaca setelah kedua akun berteman.
-- Saat pertemanan dihapus, private chat langsung hilang dan akses pesan private ditutup oleh rules.
+Cara tambah teman:
+1. Klik Teman.
+2. Masukkan Gmail lengkap.
+3. Klik Cari.
+4. Tekan Tambah pada satu hasil yang cocok.
+5. Penerima membuka Teman lalu menekan Terima.
+
+Catatan keamanan:
+- Collection users dan email_lookup tidak dapat ditampilkan sebagai daftar oleh client.
+- Pencarian membutuhkan alamat email lengkap; tidak ada pencarian sebagian nama atau saran akun.
+- Tanpa backend khusus/Cloud Functions, alamat yang memang sudah diketahui masih dapat dicoba secara exact-match. Versi ini mencegah browsing direktori, bukan rate-limiting pencarian.

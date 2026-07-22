@@ -32,7 +32,7 @@
         }
     })();
     </script>
-    <link rel="stylesheet" href="style.css?v=20260723-friends-only-private-v9">
+    <link rel="stylesheet" href="style.css?v=20260723-private-search-gmail-v10">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -210,11 +210,29 @@
             </button>
         </div>
         <div class="modal-body">
-            <label class="friend-search-box" for="friendSearchInput">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input id="friendSearchInput" type="search" placeholder="Cari nama user..." autocomplete="off">
-            </label>
-            <div id="friendSummary" class="friend-summary">Memuat daftar pertemanan...</div>
+            <form id="friendSearchForm" class="friend-search-form" autocomplete="off">
+                <label class="friend-search-box" for="friendSearchInput">
+                    <i class="fa-brands fa-google"></i>
+                    <input
+                        id="friendSearchInput"
+                        type="email"
+                        inputmode="email"
+                        placeholder="Masukkan Gmail lengkap..."
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+                </label>
+                <button id="friendSearchBtn" class="primary-btn friend-search-btn" type="submit">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Cari
+                </button>
+            </form>
+            <p class="friend-search-note">
+                Akun tidak ditampilkan sebagai daftar. Pencarian hanya berjalan setelah Gmail lengkap dimasukkan dan tombol Cari ditekan.
+            </p>
+            <div id="friendSearchResult" class="friend-search-result" hidden aria-live="polite"></div>
+            <div id="friendSummary" class="friend-summary">Memuat teman dan permintaan...</div>
             <div id="friendManagementList" class="friend-management-list" aria-live="polite"></div>
         </div>
         <div class="modal-footer">
@@ -381,8 +399,8 @@
 
 <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
-<script type="module" src="firebase.js?v=20260723-friends-only-private-v9"></script>
-<script type="module" src="auth.js?v=20260723-friends-only-private-v9"></script>
-<script type="module" src="app.js?v=20260723-friends-only-private-v9"></script>
+<script type="module" src="firebase.js?v=20260723-private-search-gmail-v10"></script>
+<script type="module" src="auth.js?v=20260723-private-search-gmail-v10"></script>
+<script type="module" src="app.js?v=20260723-private-search-gmail-v10"></script>
 </body>
 </html>

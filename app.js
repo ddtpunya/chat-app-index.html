@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260723-friends-only-private-v9";
+import { auth, db, storage } from "./firebase.js?v=20260723-private-search-gmail-v10";
 import {
     collection,
     addDoc,
@@ -6,7 +6,7 @@ import {
     query,
     where,
     onSnapshot,
-    getDocs,
+    getDoc,
     doc,
     setDoc,
     updateDoc,
@@ -55,7 +55,10 @@ const chatSettingsBtn = document.getElementById("chatSettingsBtn");
 const friendsBtn = document.getElementById("friendsBtn");
 const friendRequestBadge = document.getElementById("friendRequestBadge");
 const friendsModal = document.getElementById("friendsModal");
+const friendSearchForm = document.getElementById("friendSearchForm");
 const friendSearchInput = document.getElementById("friendSearchInput");
+const friendSearchBtn = document.getElementById("friendSearchBtn");
+const friendSearchResult = document.getElementById("friendSearchResult");
 const friendSummary = document.getElementById("friendSummary");
 const friendManagementList = document.getElementById("friendManagementList");
 const createGroupBtn = document.getElementById("createGroupBtn");
@@ -121,6 +124,8 @@ let currentOpenModal = null;
 let uploadHideTimer = null;
 let latestMessageDocs = [];
 let readReceiptBatchBusy = false;
+let searchedFriendUser = null;
+let friendSearchBusy = false;
 
 let previewGallery = [];
 let previewIndex = -1;
@@ -296,6 +301,10 @@ function getMessagePreview(data = {}) {
     return "Pesan";
 }
 
+function normalizeEmail(value = "") {
+    return String(value).trim().toLowerCase();
+}
+
 function sanitizeFileName(name = "file") {
     return String(name)
         .normalize("NFKD")
@@ -318,7 +327,6 @@ function createMessageBase(user, chatId, replyData = activeReply) {
     return {
         uid: user.uid,
         name: user.displayName || user.email?.split("@")[0] || "User",
-        email: user.email || "",
         photo: user.photoURL || "",
         chatId,
         roomKind: currentRoom.kind || "global",
@@ -1568,68 +1576,210 @@ function friendActionMarkup(state, uid) {
     return `<button class="friend-action-btn add" type="button" data-friend-action="add" data-user-uid="${safeUid}"><i class="fa-solid fa-user-plus"></i> Tambah</button>`;
 }
 
-function renderFriendManager() {
-    if (!friendManagementList) return;
-
+function getRelatedFriendRows() {
     const me = auth.currentUser;
+    if (!me) return [];
+
     const users = Array.isArray(window.chatDirectoryUsers) ? window.chatDirectoryUsers : [];
-    const search = friendSearchInput?.value.trim().toLowerCase() || "";
+    const usersByUid = new Map(users.map((user) => [user.uid, user]));
+    const relationships = Array.isArray(window.chatDirectoryFriendships)
+        ? window.chatDirectoryFriendships
+        : [];
 
-    if (!me) {
-        friendManagementList.innerHTML = `<div class="friend-manager-empty">Silakan login terlebih dahulu.</div>`;
-        return;
-    }
+    return relationships
+        .map((friendship) => {
+            const otherUid = (friendship.userUids || []).find((uid) => uid && uid !== me.uid);
+            if (!otherUid) return null;
 
-    const rows = users
-        .filter((user) => user.uid && user.uid !== me.uid)
-        .map((user) => {
-            const relation = getFriendRelation(user.uid);
-            return { user, relation };
+            const fallbackName = friendship.requesterUid === otherUid
+                ? friendship.requesterName
+                : friendship.addresseeName;
+            const fallbackPhoto = friendship.requesterUid === otherUid
+                ? friendship.requesterPhoto
+                : friendship.addresseePhoto;
+
+            const user = usersByUid.get(otherUid) || {
+                uid: otherUid,
+                name: fallbackName || "User",
+                photo: fallbackPhoto || ""
+            };
+
+            return {
+                user,
+                relation: getFriendRelation(otherUid),
+                friendship
+            };
         })
-        .filter(({ user }) => {
-            if (!search) return true;
-            const name = String(user.name || user.email?.split("@")[0] || "User").toLowerCase();
-            return name.includes(search);
-        })
+        .filter(Boolean)
         .sort((a, b) => {
             const rank = { incoming: 0, accepted: 1, outgoing: 2, none: 3 };
             const stateDiff = rank[a.relation.state] - rank[b.relation.state];
             if (stateDiff) return stateDiff;
             return String(a.user.name || "").localeCompare(String(b.user.name || ""), "id");
         });
+}
 
-    const relationships = window.chatDirectoryFriendships || [];
-    const incoming = relationships.filter((item) => item.status === "pending" && item.addresseeUid === me.uid).length;
-    const accepted = relationships.filter((item) => item.status === "accepted").length;
-    if (friendSummary) {
-        friendSummary.textContent = `${accepted} teman · ${incoming} permintaan masuk`;
-    }
+function friendUserRowMarkup(user, relation, extraClass = "") {
+    const name = user.name || "User";
+    return `
+        <div class="friend-manager-row ${escapeHTML(extraClass)}" data-friend-user="${escapeHTML(user.uid)}">
+            <img src="${escapeHTML(avatarURL(user))}" alt="avatar">
+            <div class="friend-manager-copy">
+                <strong>${escapeHTML(name)}</strong>
+                ${friendStatusMarkup(relation.state)}
+            </div>
+            <div class="friend-manager-actions">
+                ${friendActionMarkup(relation.state, user.uid)}
+            </div>
+        </div>
+    `;
+}
 
-    if (!rows.length) {
-        friendManagementList.innerHTML = `
-            <div class="friend-manager-empty">
-                <i class="fa-regular fa-user"></i>
-                <span>Tidak ada user yang cocok.</span>
+function renderFriendSearchResult() {
+    if (!friendSearchResult) return;
+
+    if (friendSearchBusy) {
+        friendSearchResult.hidden = false;
+        friendSearchResult.innerHTML = `
+            <div class="friend-search-feedback is-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Mencari akun...</span>
             </div>
         `;
         return;
     }
 
-    friendManagementList.innerHTML = rows.map(({ user, relation }) => {
-        const name = user.name || user.email?.split("@")[0] || "User";
-        return `
-            <div class="friend-manager-row" data-friend-user="${escapeHTML(user.uid)}">
-                <img src="${escapeHTML(avatarURL(user))}" alt="avatar">
-                <div class="friend-manager-copy">
-                    <strong>${escapeHTML(name)}</strong>
-                    ${friendStatusMarkup(relation.state)}
-                </div>
-                <div class="friend-manager-actions">
-                    ${friendActionMarkup(relation.state, user.uid)}
-                </div>
+    if (!searchedFriendUser) {
+        friendSearchResult.innerHTML = "";
+        friendSearchResult.hidden = true;
+        return;
+    }
+
+    friendSearchResult.hidden = false;
+    const relation = getFriendRelation(searchedFriendUser.uid);
+    friendSearchResult.innerHTML = `
+        <div class="friend-search-result-title">Hasil pencarian</div>
+        ${friendUserRowMarkup(searchedFriendUser, relation, "search-result-row")}
+    `;
+}
+
+function renderFriendManager() {
+    if (!friendManagementList) return;
+
+    const me = auth.currentUser;
+    if (!me) {
+        friendManagementList.innerHTML = `<div class="friend-manager-empty">Silakan login terlebih dahulu.</div>`;
+        return;
+    }
+
+    const rows = getRelatedFriendRows();
+    const relationships = window.chatDirectoryFriendships || [];
+    const incoming = relationships.filter((item) => item.status === "pending" && item.addresseeUid === me.uid).length;
+    const accepted = relationships.filter((item) => item.status === "accepted").length;
+
+    if (friendSummary) {
+        friendSummary.textContent = `${accepted} teman · ${incoming} permintaan masuk`;
+    }
+
+    renderFriendSearchResult();
+
+    if (!rows.length) {
+        friendManagementList.innerHTML = `
+            <div class="friend-manager-empty">
+                <i class="fa-regular fa-address-book"></i>
+                <span>Belum ada teman atau permintaan. Cari menggunakan Gmail lengkap di atas.</span>
             </div>
         `;
-    }).join("");
+        return;
+    }
+
+    friendManagementList.innerHTML = rows
+        .map(({ user, relation }) => friendUserRowMarkup(user, relation))
+        .join("");
+}
+
+async function searchFriendByEmail() {
+    const me = auth.currentUser;
+    const normalizedEmail = normalizeEmail(friendSearchInput?.value || "");
+
+    if (!me) return;
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+        showToast("Masukkan alamat Gmail lengkap dan valid.", "error");
+        friendSearchInput?.focus();
+        return;
+    }
+
+    if (normalizeEmail(me.email || "") === normalizedEmail) {
+        searchedFriendUser = null;
+        renderFriendSearchResult();
+        showToast("Anda tidak dapat menambahkan akun sendiri.", "error");
+        return;
+    }
+
+    try {
+        friendSearchBusy = true;
+        searchedFriendUser = null;
+        renderFriendSearchResult();
+        if (friendSearchBtn) friendSearchBtn.disabled = true;
+
+        const lookupSnapshot = await getDoc(doc(db, "email_lookup", normalizedEmail));
+
+        if (!lookupSnapshot.exists()) {
+            friendSearchBusy = false;
+            if (friendSearchResult) {
+                friendSearchResult.hidden = false;
+                friendSearchResult.innerHTML = `
+                    <div class="friend-search-feedback is-empty">
+                        <i class="fa-regular fa-circle-question"></i>
+                        <span>Akun tidak ditemukan atau belum pernah login ke CHAT DDT.</span>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        const result = lookupSnapshot.data() || {};
+        if (normalizeEmail(result.email || "") !== normalizedEmail) {
+            friendSearchBusy = false;
+            if (friendSearchResult) {
+                friendSearchResult.hidden = false;
+                friendSearchResult.innerHTML = `
+                    <div class="friend-search-feedback is-empty">
+                        <i class="fa-regular fa-circle-question"></i>
+                        <span>Akun tidak ditemukan atau belum pernah login ke CHAT DDT.</span>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        if (!result.uid || result.uid === me.uid) {
+            showToast("Akun tidak dapat ditambahkan.", "error");
+            return;
+        }
+
+        searchedFriendUser = {
+            uid: result.uid,
+            name: result.name || "User",
+            photo: result.photo || ""
+        };
+    } catch (error) {
+        console.error("Pencarian Gmail gagal:", error);
+        if (friendSearchResult) {
+            friendSearchResult.hidden = false;
+            friendSearchResult.innerHTML = `
+                <div class="friend-search-feedback is-empty">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Pencarian gagal. Periksa koneksi dan Firestore Rules v10.</span>
+                </div>
+            `;
+        }
+        showToast("Pencarian gagal. Publish Firestore Rules v10.", "error");
+    } finally {
+        friendSearchBusy = false;
+        if (friendSearchBtn) friendSearchBtn.disabled = false;
+        if (searchedFriendUser) renderFriendSearchResult();
+    }
 }
 
 async function performFriendAction(action, otherUid, button) {
@@ -1638,8 +1788,11 @@ async function performFriendAction(action, otherUid, button) {
 
     const relationshipId = directChatId(me.uid, otherUid);
     const relationshipRef = doc(db, "friendships", relationshipId);
-    const user = (window.chatDirectoryUsers || []).find((item) => item.uid === otherUid) || {};
-    const name = user.name || user.email?.split("@")[0] || "User";
+    const user = [
+        ...(window.chatDirectoryUsers || []),
+        ...(searchedFriendUser ? [searchedFriendUser] : [])
+    ].find((item) => item.uid === otherUid) || {};
+    const name = user.name || "User";
 
     try {
         if (button) button.disabled = true;
@@ -1649,7 +1802,11 @@ async function performFriendAction(action, otherUid, button) {
             await setDoc(relationshipRef, {
                 userUids,
                 requesterUid: me.uid,
+                requesterName: me.displayName || me.email?.split("@")[0] || "User",
+                requesterPhoto: me.photoURL || "",
                 addresseeUid: otherUid,
+                addresseeName: user.name || "User",
+                addresseePhoto: user.photo || "",
                 status: "pending",
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
@@ -1677,7 +1834,7 @@ async function performFriendAction(action, otherUid, button) {
         }
     } catch (error) {
         console.error("Aksi pertemanan gagal:", error);
-        showToast("Aksi pertemanan gagal. Publish Firestore Rules v9.", "error");
+        showToast("Aksi pertemanan gagal. Publish Firestore Rules v10.", "error");
     } finally {
         if (button) button.disabled = false;
     }
@@ -1685,13 +1842,23 @@ async function performFriendAction(action, otherUid, button) {
 
 friendsBtn?.addEventListener("click", () => {
     if (friendSearchInput) friendSearchInput.value = "";
+    searchedFriendUser = null;
+    friendSearchBusy = false;
     renderFriendManager();
     openModal(friendsModal);
 });
 
-friendSearchInput?.addEventListener("input", renderFriendManager);
+friendSearchForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void searchFriendByEmail();
+});
 
-friendManagementList?.addEventListener("click", (event) => {
+friendSearchInput?.addEventListener("input", () => {
+    searchedFriendUser = null;
+    renderFriendSearchResult();
+});
+
+friendsModal?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-friend-action]");
     if (!button) return;
     event.preventDefault();
@@ -1757,7 +1924,7 @@ function renderMemberPicker(users) {
         });
 }
 
-async function openCreateGroupDialog() {
+function openCreateGroupDialog() {
     const me = auth.currentUser;
     if (!me) {
         showToast("Silakan login terlebih dahulu.", "error");
@@ -1765,20 +1932,11 @@ async function openCreateGroupDialog() {
     }
 
     newGroupName && (newGroupName.value = "");
-    if (groupMemberList) {
-        groupMemberList.innerHTML = `<div class="member-picker-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat user...</div>`;
-    }
     openModal(createGroupModal);
 
-    try {
-        const snapshot = await getDocs(collection(db, "users"));
-        const users = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-        renderMemberPicker(users);
-    } catch (error) {
-        console.error("Gagal mengambil user untuk grup:", error);
-        renderMemberPicker(window.chatDirectoryUsers || []);
-        showToast("Daftar user memakai data lokal terakhir.", "error");
-    }
+    // Hanya teman yang sudah terkait yang tersedia sebagai anggota grup.
+    // Tidak ada query/listing seluruh collection users.
+    renderMemberPicker(window.chatDirectoryUsers || []);
 }
 
 createGroupBtn?.addEventListener("click", openCreateGroupDialog);

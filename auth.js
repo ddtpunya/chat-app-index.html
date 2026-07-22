@@ -14,19 +14,18 @@ import {
     onSnapshot,
     query,
     where,
-    serverTimestamp
+    serverTimestamp,
+    deleteField
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260723-friends-only-private-v9";
+import { auth, db } from "./firebase.js?v=20260723-private-search-gmail-v10";
 
-// Tambahkan email lain ke daftar ini agar mereka dapat login dan muncul
-// sebagai pilihan private chat / anggota grup.
+// Tambahkan email lain ke daftar ini agar mereka dapat login.
+// Akun tidak ditampilkan sebagai direktori publik; penambahan teman memakai pencarian Gmail exact-match.
 const ALLOWED_EMAILS = [
-    "verensmb@gmail.com",
-    "anthonyan4556@gmail.com",
-    "verenlim49@gmail.com",
-    "anthonywian4@gmail.com",
+    "antho56@gmail.com"
 ];
+
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userList = document.getElementById("userList");
@@ -46,7 +45,7 @@ let directoryGroups = [];
 let directoryFriendships = [];
 let directoryMode = "all";
 let activeChatId = "global";
-let unsubscribeUsers = null;
+let unsubscribeUserProfiles = new Map();
 let unsubscribeGroups = null;
 let unsubscribeFriendships = null;
 let presenceHeartbeatTimer = null;
@@ -73,6 +72,10 @@ function safeImageURL(value, fallbackName = "User") {
     }
 
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}&background=1f2a44&color=ffffff`;
+}
+
+function normalizeEmail(value = "") {
+    return String(value).trim().toLowerCase();
 }
 
 function directChatId(uidA, uidB) {
@@ -141,6 +144,23 @@ function formatLastSeen(user = {}) {
 
     const dateText = date.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
     return `Terakhir dilihat ${dateText}, ${time}`;
+}
+
+async function syncEmailLookup(user) {
+    const normalizedEmail = normalizeEmail(user?.email || "");
+    if (!user?.uid || !normalizedEmail) return;
+
+    await setDoc(
+        doc(db, "email_lookup", normalizedEmail),
+        {
+            uid: user.uid,
+            email: normalizedEmail,
+            name: user.displayName || normalizedEmail.split("@")[0] || "User",
+            photo: user.photoURL || "",
+            updatedAt: serverTimestamp()
+        },
+        { merge: true }
+    );
 }
 
 async function writePresence(state = "online") {
@@ -480,28 +500,61 @@ window.setActiveSidebarChat = (chatId) => {
     });
 };
 
+function clearUserProfileListeners() {
+    unsubscribeUserProfiles.forEach((unsubscribe) => {
+        try { unsubscribe?.(); } catch { /* no-op */ }
+    });
+    unsubscribeUserProfiles.clear();
+}
+
+function syncRelatedUserProfileListeners(user) {
+    const relatedUids = new Set();
+    directoryFriendships.forEach((friendship) => {
+        (friendship.userUids || []).forEach((uid) => {
+            if (uid && uid !== user.uid) relatedUids.add(uid);
+        });
+    });
+
+    unsubscribeUserProfiles.forEach((unsubscribe, uid) => {
+        if (!relatedUids.has(uid)) {
+            try { unsubscribe?.(); } catch { /* no-op */ }
+            unsubscribeUserProfiles.delete(uid);
+            directoryUsers = directoryUsers.filter((item) => item.uid !== uid);
+        }
+    });
+
+    relatedUids.forEach((uid) => {
+        if (unsubscribeUserProfiles.has(uid)) return;
+
+        const unsubscribe = onSnapshot(
+            doc(db, "users", uid),
+            (snapshot) => {
+                const data = snapshot.exists()
+                    ? { id: snapshot.id, uid: snapshot.id, ...snapshot.data() }
+                    : { uid, name: "User", photo: "" };
+
+                directoryUsers = [
+                    ...directoryUsers.filter((item) => item.uid !== uid),
+                    data
+                ];
+                renderDirectory();
+            },
+            (error) => {
+                console.warn("Gagal membaca profil teman:", error);
+            }
+        );
+
+        unsubscribeUserProfiles.set(uid, unsubscribe);
+    });
+
+    renderDirectory();
+}
+
 function startDirectoryListeners(user) {
-    unsubscribeUsers?.();
+    clearUserProfileListeners();
     unsubscribeGroups?.();
     unsubscribeFriendships?.();
-
-    unsubscribeUsers = onSnapshot(
-        collection(db, "users"),
-        (snapshot) => {
-            directoryUsers = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-            renderDirectory();
-        },
-        (error) => {
-            console.error("Gagal mengambil daftar user:", error);
-            directoryUsers = [{
-                uid: user.uid,
-                name: user.displayName || user.email?.split("@")[0] || "User",
-                email: user.email || "",
-                photo: user.photoURL || ""
-            }];
-            renderDirectory();
-        }
-    );
+    directoryUsers = [];
 
     const groupsQuery = query(
         collection(db, "groups"),
@@ -530,11 +583,13 @@ function startDirectoryListeners(user) {
         friendshipsQuery,
         (snapshot) => {
             directoryFriendships = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+            syncRelatedUserProfileListeners(user);
             renderDirectory();
         },
         (error) => {
             console.error("Gagal mengambil daftar pertemanan:", error);
             directoryFriendships = [];
+            syncRelatedUserProfileListeners(user);
             renderDirectory();
         }
     );
@@ -546,7 +601,7 @@ async function handleAuthStateChange(user) {
 
     if (!user) {
         stopPresenceTracking();
-        unsubscribeUsers?.();
+        clearUserProfileListeners();
         unsubscribeGroups?.();
         unsubscribeFriendships?.();
         directoryFriendships = [];
@@ -575,19 +630,22 @@ async function handleAuthStateChange(user) {
     startDirectoryListeners(user);
 
     try {
-        await setDoc(
-            doc(db, "users", user.uid),
-            {
-                uid: user.uid,
-                name: user.displayName || user.email?.split("@")[0] || "User",
-                email: user.email || "",
-                photo: user.photoURL || "",
-                lastLogin: serverTimestamp(),
-                presenceState: "online",
-                presenceUpdatedAt: serverTimestamp()
-            },
-            { merge: true }
-        );
+        await Promise.all([
+            setDoc(
+                doc(db, "users", user.uid),
+                {
+                    uid: user.uid,
+                    name: user.displayName || user.email?.split("@")[0] || "User",
+                    email: deleteField(),
+                    photo: user.photoURL || "",
+                    lastLogin: serverTimestamp(),
+                    presenceState: "online",
+                    presenceUpdatedAt: serverTimestamp()
+                },
+                { merge: true }
+            ),
+            syncEmailLookup(user)
+        ]);
     } catch (error) {
         // Keep the existing Firebase Auth session. Presence can retry on the
         // next heartbeat instead of forcing the user back to the login page.

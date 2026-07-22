@@ -53,10 +53,42 @@ service cloud.firestore {
              );
     }
 
+    function hasRelationshipWith(userId) {
+      return signedIn()
+             && userId is string
+             && (
+               exists(/databases/$(database)/documents/friendships/$(request.auth.uid + '_' + userId))
+               || exists(/databases/$(database)/documents/friendships/$(userId + '_' + request.auth.uid))
+             );
+    }
+
     match /users/{userId} {
-      allow read: if signedIn();
+      allow get: if signedIn()
+                 && (request.auth.uid == userId || hasRelationshipWith(userId));
+      allow list: if false;
       allow create, update: if signedIn() && request.auth.uid == userId;
       allow delete: if false;
+    }
+
+    match /email_lookup/{emailKey} {
+      // Exact document lookup only; listing/querying the collection is denied.
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+                    && request.auth.token.email is string
+                    && emailKey == request.auth.token.email
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.email == request.auth.token.email;
+      allow update: if signedIn()
+                    && request.auth.token.email is string
+                    && emailKey == request.auth.token.email
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.email == request.auth.token.email;
+      allow delete: if signedIn()
+                    && request.auth.token.email is string
+                    && emailKey == request.auth.token.email
+                    && resource.data.uid == request.auth.uid;
     }
 
     match /friendships/{friendshipId} {
