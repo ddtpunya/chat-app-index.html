@@ -23,7 +23,10 @@ import { auth, db } from "./firebase.js?v=20260723-private-search-gmail-v10";
 // Tambahkan email lain ke daftar ini agar mereka dapat login.
 // Akun tidak ditampilkan sebagai direktori publik; penambahan teman memakai pencarian Gmail exact-match.
 const ALLOWED_EMAILS = [
-    "antho56@gmail.com"
+    "verensmb@gmail.com",
+    "anthonyan4556@gmail.com",
+    "verenlim49@gmail.com",
+    "anthonywian4@gmail.com",
 ];
 
 const loginBtn = document.getElementById("loginBtn");
