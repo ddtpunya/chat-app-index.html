@@ -22,9 +22,11 @@ import { auth, db } from "./firebase.js?v=20260723-friends-only-private-v9";
 // Tambahkan email lain ke daftar ini agar mereka dapat login dan muncul
 // sebagai pilihan private chat / anggota grup.
 const ALLOWED_EMAILS = [
-    "antho56@gmail.com"
+    "verensmb@gmail.com",
+    "anthonyan4556@gmail.com",
+    "verenlim49@gmail.com",
+    "anthonywian4@gmail.com",
 ];
-
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userList = document.getElementById("userList");
