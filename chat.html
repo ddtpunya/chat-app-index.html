@@ -11,32 +11,29 @@
     <script>
     (async () => {
         const APP_PATH = "/chat-app-index.html/";
-
         try {
             if ("serviceWorker" in navigator) {
                 const registrations = await navigator.serviceWorker.getRegistrations();
                 await Promise.all(
                     registrations
-                        .filter(registration => {
+                        .filter((registration) => {
                             try {
                                 return new URL(registration.scope).pathname.startsWith(APP_PATH);
                             } catch {
                                 return false;
                             }
                         })
-                        .map(registration => registration.unregister())
+                        .map((registration) => registration.unregister())
                 );
             }
         } catch (error) {
             console.warn("Service worker cleanup gagal:", error);
         }
-
-        // Query parameter creates a fresh document cache key.
-        location.replace(`${APP_PATH}?reset=20260711-image-upload-fallback-1`);
+        location.replace(`${APP_PATH}?reset=20260723-all-buttons-v1`);
     })();
     </script>
     <noscript>
-        <meta http-equiv="refresh" content="0;url=/chat-app-index.html/?reset=20260711-image-upload-fallback-1">
+        <meta http-equiv="refresh" content="0;url=/chat-app-index.html/?reset=20260723-all-buttons-v1">
     </noscript>
 </body>
 </html>

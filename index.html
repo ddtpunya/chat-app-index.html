@@ -10,22 +10,20 @@
     <script>
     (() => {
         const APP_PATH = "/chat-app-index.html/";
-
-        // Remove only service workers belonging to this GitHub Pages project.
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", async () => {
                 try {
                     const registrations = await navigator.serviceWorker.getRegistrations();
                     await Promise.all(
                         registrations
-                            .filter(registration => {
+                            .filter((registration) => {
                                 try {
                                     return new URL(registration.scope).pathname.startsWith(APP_PATH);
                                 } catch {
                                     return false;
                                 }
                             })
-                            .map(registration => registration.unregister())
+                            .map((registration) => registration.unregister())
                     );
                 } catch (error) {
                     console.warn("Service worker cleanup gagal:", error);
@@ -34,8 +32,7 @@
         }
     })();
     </script>
-
-    <link rel="stylesheet" href="style.css?v=20260711-image-upload-fallback-1">
+    <link rel="stylesheet" href="style.css?v=20260723-all-buttons-v1">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -44,7 +41,7 @@
     <div class="login-card">
         <h1>CHAT DDT</h1>
         <p>Realtime Group Chat</p>
-        <button id="loginBtn">
+        <button id="loginBtn" type="button">
             <i class="fa-brands fa-google"></i>
             Login Google
         </button>
@@ -52,23 +49,21 @@
 </div>
 
 <div id="chatPage" style="display:none;">
-
     <aside class="sidebar">
         <div class="profile-card">
             <div class="profile-left">
                 <img id="myPhoto" src="https://ui-avatars.com/api/?name=DDT" class="profile-avatar" alt="My Profile">
-                <div>
+                <div class="profile-copy">
                     <div id="myName" class="profile-name">Loading...</div>
                     <div class="online-status">
                         <span class="dot"></span>
-                        <span class="dot dot-soft"></span>
                         Online
                     </div>
                 </div>
             </div>
 
             <div class="profile-actions">
-                <button class="icon-btn" title="Setting" type="button">
+                <button id="profileSettingsBtn" class="icon-btn" title="Pengaturan profil" type="button">
                     <i class="fa-solid fa-gear"></i>
                 </button>
                 <button id="logoutBtn" class="icon-btn" title="Logout" type="button">
@@ -78,27 +73,27 @@
         </div>
 
         <div class="sidebar-search-wrap">
-            <div class="search-box">
+            <label class="search-box" for="sidebarSearchInput">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" placeholder="Cari user atau grup...">
-            </div>
+                <input id="sidebarSearchInput" type="search" placeholder="Cari user atau grup..." autocomplete="off">
+            </label>
         </div>
 
-        <button class="groups-btn" type="button">
+        <button id="groupsBtn" class="groups-btn" type="button" aria-pressed="false">
             <i class="fa-regular fa-message"></i>
-            Groups
+            <span class="button-label">Groups</span>
         </button>
 
-        <button class="create-group-btn" type="button">
+        <button id="createGroupBtn" class="create-group-btn" type="button">
             <i class="fa-solid fa-plus"></i>
-            Buat Grup Baru
+            <span class="button-label">Buat Grup Baru</span>
         </button>
 
-        <div id="userList" class="group-list"></div>
+        <div id="userList" class="group-list" aria-live="polite"></div>
     </aside>
 
     <div class="sidebar-divider">
-        <button class="collapse-handle" title="Collapse sidebar" type="button">
+        <button id="collapseSidebarBtn" class="collapse-handle" title="Ringkas sidebar" type="button" aria-expanded="true">
             <i class="fa-solid fa-chevron-left"></i>
         </button>
     </div>
@@ -106,33 +101,37 @@
     <main class="chat">
         <div class="chat-header">
             <div class="chat-header-left">
-                <button id="backToSidebarBtn" class="icon-btn back-btn" style="display:none;" type="button">
+                <button id="backToSidebarBtn" class="icon-btn back-btn" style="display:none;" type="button" title="Kembali">
                     <i class="fa-solid fa-arrow-left"></i>
                 </button>
 
-                <img src="https://ui-avatars.com/api/?name=DDT" class="chat-group-avatar" alt="Group Avatar">
-                <div>
-                    <div class="group-title" id="roomName">Room Chat</div>
-                    <div class="group-members" id="roomMembers">0 anggota</div>
+                <img id="chatGroupAvatar" src="https://ui-avatars.com/api/?name=DDT" class="chat-group-avatar" alt="Group Avatar">
+                <div class="room-copy">
+                    <div class="group-title" id="roomName">Global Chat</div>
+                    <div class="group-members" id="roomMembers">Obrolan Publik</div>
                 </div>
             </div>
 
             <div class="chat-header-right">
-                <div class="message-search">
+                <div id="messageSearchWrap" class="message-search">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Cari pesan di chat ini...">
+                    <input id="messageSearchInput" type="search" placeholder="Cari pesan di chat ini..." autocomplete="off">
+                    <span id="messageSearchStatus" class="message-search-status"></span>
+                    <button id="clearMessageSearchBtn" class="inline-clear-btn" type="button" title="Hapus pencarian" hidden>
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
 
-                <button class="icon-btn" title="Cari" type="button">
+                <button id="toggleMessageSearchBtn" class="icon-btn" title="Cari pesan" type="button" aria-expanded="false">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
-                <button class="icon-btn" title="Setting" type="button">
+                <button id="chatSettingsBtn" class="icon-btn" title="Pengaturan chat" type="button">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
         </div>
 
-        <div id="messages"></div>
+        <div id="messages" aria-live="polite"></div>
 
         <button id="scrollBottomBtn" class="scroll-bottom-btn" type="button">
             <i class="fa-solid fa-chevron-down"></i>
@@ -165,9 +164,7 @@
 
             <div class="input-box">
                 <button id="emojiBtn" class="bottom-btn" title="Emotikon" type="button" aria-expanded="false" aria-controls="emojiPicker">😊</button>
-
                 <input type="text" id="messageInput" placeholder="Ketik pesan... (Ctrl+V untuk paste gambar)" autocomplete="off">
-
                 <button id="imageBtn" class="bottom-btn" title="Upload gambar" type="button">
                     <i class="fa-regular fa-image"></i>
                 </button>
@@ -185,9 +182,114 @@
     </main>
 </div>
 
-<script type="module" src="firebase.js?v=20260711-image-upload-fallback-1"></script>
-<script type="module" src="auth.js?v=20260711-image-upload-fallback-1"></script>
-<script type="module" src="app.js?v=20260711-image-upload-fallback-1"></script>
+<div id="modalBackdrop" class="modal-backdrop" hidden></div>
 
+<section id="createGroupModal" class="app-modal" hidden role="dialog" aria-modal="true" aria-labelledby="createGroupTitle">
+    <form id="createGroupForm" class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="createGroupTitle">Buat Grup Baru</h2>
+                <p>Pilih nama dan anggota grup.</p>
+            </div>
+            <button class="modal-close-btn" type="button" data-close-modal title="Tutup">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <label class="field-label" for="newGroupName">Nama grup</label>
+            <input id="newGroupName" class="modal-input" type="text" maxlength="50" placeholder="Contoh: Tim DDT" required>
+            <div class="field-label member-label-row">
+                <span>Anggota</span>
+                <button id="selectAllMembersBtn" class="text-btn" type="button">Pilih semua</button>
+            </div>
+            <div id="groupMemberList" class="member-picker"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary-btn" type="button" data-close-modal>Batal</button>
+            <button id="saveGroupBtn" class="primary-btn" type="submit">
+                <i class="fa-solid fa-user-group"></i>
+                Buat Grup
+            </button>
+        </div>
+    </form>
+</section>
+
+<section id="profileSettingsModal" class="app-modal" hidden role="dialog" aria-modal="true" aria-labelledby="profileSettingsTitle">
+    <form id="profileSettingsForm" class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="profileSettingsTitle">Pengaturan Profil</h2>
+                <p>Atur nama dan tampilan aplikasi.</p>
+            </div>
+            <button class="modal-close-btn" type="button" data-close-modal title="Tutup">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <label class="field-label" for="profileDisplayName">Nama tampilan</label>
+            <input id="profileDisplayName" class="modal-input" type="text" maxlength="40" required>
+            <label class="field-label" for="profileEmail">Email</label>
+            <input id="profileEmail" class="modal-input" type="email" readonly>
+            <label class="switch-row">
+                <span>
+                    <strong>Mode pesan ringkas</strong>
+                    <small>Mengurangi jarak antar pesan.</small>
+                </span>
+                <input id="compactMessagesToggle" type="checkbox">
+                <span class="switch-control"></span>
+            </label>
+        </div>
+        <div class="modal-footer">
+            <button class="secondary-btn" type="button" data-close-modal>Batal</button>
+            <button id="saveProfileBtn" class="primary-btn" type="submit">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Simpan
+            </button>
+        </div>
+    </form>
+</section>
+
+<section id="chatSettingsModal" class="app-modal" hidden role="dialog" aria-modal="true" aria-labelledby="chatSettingsTitle">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="chatSettingsTitle">Informasi Chat</h2>
+                <p id="chatSettingsSubtitle">Detail ruang aktif.</p>
+            </div>
+            <button class="modal-close-btn" type="button" data-close-modal title="Tutup">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="info-row">
+                <span>Nama</span>
+                <strong id="settingsRoomName">Global Chat</strong>
+            </div>
+            <div class="info-row">
+                <span>Keterangan</span>
+                <strong id="settingsRoomMembers">Obrolan Publik</strong>
+            </div>
+            <div class="copy-field">
+                <input id="settingsRoomId" class="modal-input" type="text" readonly>
+                <button id="copyRoomIdBtn" class="secondary-btn" type="button" title="Salin ID ruang">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+            <button id="clearRoomSearchBtn" class="wide-secondary-btn" type="button">
+                <i class="fa-solid fa-eraser"></i>
+                Bersihkan pencarian pesan
+            </button>
+        </div>
+        <div class="modal-footer">
+            <button class="primary-btn" type="button" data-close-modal>Selesai</button>
+        </div>
+    </div>
+</section>
+
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<script type="module" src="firebase.js?v=20260723-all-buttons-v1"></script>
+<script type="module" src="auth.js?v=20260723-all-buttons-v1"></script>
+<script type="module" src="app.js?v=20260723-all-buttons-v1"></script>
 </body>
 </html>

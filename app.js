@@ -1,13 +1,16 @@
-import { auth, db, storage } from "./firebase.js?v=20260711-image-upload-fallback-1";
+import { auth, db, storage } from "./firebase.js?v=20260723-all-buttons-v1";
 import {
     collection,
     addDoc,
     serverTimestamp,
     query,
     where,
-    orderBy,
-    onSnapshot
+    onSnapshot,
+    getDocs,
+    doc,
+    setDoc
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { updateProfile } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 import {
     ref,
     uploadBytesResumable,
@@ -37,6 +40,37 @@ const uploadStatus = document.getElementById("uploadStatus");
 const uploadStatusText = document.getElementById("uploadStatusText");
 const uploadProgressBar = document.getElementById("uploadProgressBar");
 
+const chatGroupAvatar = document.getElementById("chatGroupAvatar");
+const toggleMessageSearchBtn = document.getElementById("toggleMessageSearchBtn");
+const messageSearchWrap = document.getElementById("messageSearchWrap");
+const messageSearchInput = document.getElementById("messageSearchInput");
+const messageSearchStatus = document.getElementById("messageSearchStatus");
+const clearMessageSearchBtn = document.getElementById("clearMessageSearchBtn");
+const profileSettingsBtn = document.getElementById("profileSettingsBtn");
+const chatSettingsBtn = document.getElementById("chatSettingsBtn");
+const createGroupBtn = document.getElementById("createGroupBtn");
+const collapseSidebarBtn = document.getElementById("collapseSidebarBtn");
+const createGroupModal = document.getElementById("createGroupModal");
+const createGroupForm = document.getElementById("createGroupForm");
+const newGroupName = document.getElementById("newGroupName");
+const groupMemberList = document.getElementById("groupMemberList");
+const selectAllMembersBtn = document.getElementById("selectAllMembersBtn");
+const saveGroupBtn = document.getElementById("saveGroupBtn");
+const profileSettingsModal = document.getElementById("profileSettingsModal");
+const profileSettingsForm = document.getElementById("profileSettingsForm");
+const profileDisplayName = document.getElementById("profileDisplayName");
+const profileEmail = document.getElementById("profileEmail");
+const compactMessagesToggle = document.getElementById("compactMessagesToggle");
+const saveProfileBtn = document.getElementById("saveProfileBtn");
+const chatSettingsModal = document.getElementById("chatSettingsModal");
+const settingsRoomName = document.getElementById("settingsRoomName");
+const settingsRoomMembers = document.getElementById("settingsRoomMembers");
+const settingsRoomId = document.getElementById("settingsRoomId");
+const copyRoomIdBtn = document.getElementById("copyRoomIdBtn");
+const clearRoomSearchBtn = document.getElementById("clearRoomSearchBtn");
+const modalBackdrop = document.getElementById("modalBackdrop");
+const toastContainer = document.getElementById("toastContainer");
+
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 const EMOJIS = [
     "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣",
@@ -51,6 +85,16 @@ let currentChatId = "global";
 let unsubscribeChat = null;
 let activeReply = null;
 let isUploading = false;
+let currentRoom = {
+    kind: "global",
+    chatId: "global",
+    name: "Global Chat",
+    memberLabel: "Obrolan Publik",
+    photo: "https://ui-avatars.com/api/?name=Global+Chat&background=2563eb&color=ffffff",
+    memberUids: []
+};
+let currentMessageSearch = "";
+let currentOpenModal = null;
 
 // =========================
 // HELPER
@@ -715,8 +759,7 @@ function listenToChat(chatId) {
 
     const messagesQuery = query(
         collection(db, "messages"),
-        where("chatId", "==", chatId),
-        orderBy("createdAt")
+        where("chatId", "==", chatId)
     );
 
     unsubscribeChat = onSnapshot(messagesQuery, (snapshot) => {
@@ -725,7 +768,13 @@ function listenToChat(chatId) {
         const shouldAutoScroll = isNearBottom();
         messages.innerHTML = "";
 
-        snapshot.forEach((messageDoc) => {
+        const sortedDocs = snapshot.docs.slice().sort((a, b) => {
+            const aTime = a.data().createdAt?.toMillis?.() || 0;
+            const bTime = b.data().createdAt?.toMillis?.() || 0;
+            return aTime - bTime;
+        });
+
+        sortedDocs.forEach((messageDoc) => {
             const data = messageDoc.data();
             const me = auth.currentUser;
             if (!me) return;
@@ -738,6 +787,13 @@ function listenToChat(chatId) {
             const row = document.createElement("div");
             row.id = `message-${messageDoc.id}`;
             row.className = `message-row ${isMe ? "message-me" : "message-other"}`;
+            row.dataset.searchText = [
+                name,
+                data.text || "",
+                data.attachment?.name || "",
+                data.replyTo?.name || "",
+                data.replyTo?.preview || ""
+            ].join(" ").toLowerCase();
 
             row.innerHTML = `
                 <img class="message-avatar" src="${escapeHTML(avatarURL(data))}" alt="avatar">
@@ -779,7 +835,8 @@ function listenToChat(chatId) {
             messages.appendChild(row);
         });
 
-        if (shouldAutoScroll) scrollToBottom();
+        applyMessageSearch();
+        if (shouldAutoScroll && !currentMessageSearch) scrollToBottom();
         scrollBottomBtn?.classList.toggle("show", !isNearBottom());
     }, (error) => {
         console.error("Gagal memuat chat:", error);
@@ -792,39 +849,114 @@ function listenToChat(chatId) {
 }
 
 // =========================
-// OPEN CHAT
+// TOAST & MODAL HELPERS
 // =========================
-window.openChat = function (otherUser) {
-    const me = auth.currentUser;
-    if (!me) return;
+function showToast(message, type = "success") {
+    if (!toastContainer) return;
 
-    clearReply();
-    closeEmojiPicker();
+    const toast = document.createElement("div");
+    toast.className = `app-toast ${type}`;
+    toast.innerHTML = `
+        <i class="fa-solid ${type === "error" ? "fa-circle-exclamation" : "fa-circle-check"}"></i>
+        <span>${escapeHTML(message)}</span>
+    `;
+    toastContainer.appendChild(toast);
 
-    if (otherUser === "global") {
-        currentChatId = "global";
-        if (roomName) roomName.innerText = "GANTI G";
-        if (roomMembers) roomMembers.innerText = "65 anggota";
-    } else {
-        currentChatId = me.uid < otherUser.uid
-            ? `${me.uid}_${otherUser.uid}`
-            : `${otherUser.uid}_${me.uid}`;
+    requestAnimationFrame(() => toast.classList.add("show"));
+    window.setTimeout(() => {
+        toast.classList.remove("show");
+        window.setTimeout(() => toast.remove(), 220);
+    }, 2800);
+}
 
-        if (roomName) roomName.innerText = otherUser.name || "Private Chat";
-        if (roomMembers) roomMembers.innerText = otherUser.email || "Private chat";
-    }
+function openModal(modal) {
+    if (!modal) return;
+    closeModal();
+    currentOpenModal = modal;
+    modal.hidden = false;
+    modalBackdrop && (modalBackdrop.hidden = false);
+    document.body.classList.add("modal-open");
+    requestAnimationFrame(() => {
+        modal.classList.add("open");
+        modalBackdrop?.classList.add("open");
+        modal.querySelector("input:not([readonly]), button")?.focus();
+    });
+}
 
-    console.log("Kamar Chat Aktif:", currentChatId);
-    listenToChat(currentChatId);
-};
+function closeModal() {
+    if (!currentOpenModal) return;
+    const modal = currentOpenModal;
+    modal.classList.remove("open");
+    modalBackdrop?.classList.remove("open");
+    document.body.classList.remove("modal-open");
+    currentOpenModal = null;
 
-auth.onAuthStateChanged((user) => {
-    if (user) window.openChat("global");
+    window.setTimeout(() => {
+        modal.hidden = true;
+        if (modalBackdrop) modalBackdrop.hidden = true;
+    }, 180);
+}
+
+modalBackdrop?.addEventListener("click", closeModal);
+document.querySelectorAll("[data-close-modal]").forEach((button) => {
+    button.addEventListener("click", closeModal);
 });
 
-// ==========================================
-// RESPONSIVE MOBILE
-// ==========================================
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && currentOpenModal) {
+        event.preventDefault();
+        closeModal();
+    }
+});
+
+// =========================
+// MESSAGE SEARCH
+// =========================
+function applyMessageSearch() {
+    const term = currentMessageSearch.trim().toLowerCase();
+    const rows = Array.from(messages?.querySelectorAll(".message-row") || []);
+    let found = 0;
+
+    rows.forEach((row) => {
+        const matched = !term || String(row.dataset.searchText || "").includes(term);
+        row.hidden = !matched;
+        row.classList.toggle("search-match", Boolean(term && matched));
+        if (matched) found += 1;
+    });
+
+    if (messageSearchStatus) {
+        messageSearchStatus.textContent = term ? `${found}/${rows.length}` : "";
+    }
+    if (clearMessageSearchBtn) clearMessageSearchBtn.hidden = !term;
+}
+
+function clearMessageSearch() {
+    currentMessageSearch = "";
+    if (messageSearchInput) messageSearchInput.value = "";
+    applyMessageSearch();
+}
+
+messageSearchInput?.addEventListener("input", () => {
+    currentMessageSearch = messageSearchInput.value;
+    applyMessageSearch();
+});
+
+clearMessageSearchBtn?.addEventListener("click", () => {
+    clearMessageSearch();
+    messageSearchInput?.focus();
+});
+
+toggleMessageSearchBtn?.addEventListener("click", () => {
+    const open = !messageSearchWrap?.classList.contains("mobile-open");
+    messageSearchWrap?.classList.toggle("mobile-open", open);
+    toggleMessageSearchBtn.setAttribute("aria-expanded", String(open));
+    if (open) messageSearchInput?.focus();
+});
+
+// =========================
+// SIDEBAR COLLAPSE
+// =========================
+const SIDEBAR_COLLAPSE_KEY = "chat-ddt-sidebar-collapsed";
 const sidebar = document.querySelector(".sidebar");
 const chatArea = document.querySelector(".chat");
 const backBtn = document.getElementById("backToSidebarBtn");
@@ -833,36 +965,300 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
-const originalOpenChat = window.openChat;
-window.openChat = function (otherUser) {
-    originalOpenChat(otherUser);
+function applySidebarCollapse(collapsed) {
+    const shouldCollapse = Boolean(collapsed) && !isMobile();
+    document.getElementById("chatPage")?.classList.toggle("sidebar-collapsed", shouldCollapse);
+    collapseSidebarBtn?.setAttribute("aria-expanded", String(!shouldCollapse));
+    collapseSidebarBtn?.setAttribute("title", shouldCollapse ? "Buka sidebar" : "Ringkas sidebar");
+}
 
-    if (isMobile() && sidebar && chatArea) {
-        sidebar.style.display = "none";
-        chatArea.style.display = "flex";
+const savedSidebarState = localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "1";
+applySidebarCollapse(savedSidebarState);
+
+collapseSidebarBtn?.addEventListener("click", () => {
+    if (isMobile()) return;
+    const next = !document.getElementById("chatPage")?.classList.contains("sidebar-collapsed");
+    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, next ? "1" : "0");
+    applySidebarCollapse(next);
+});
+
+// =========================
+// CREATE GROUP
+// =========================
+function renderMemberPicker(users) {
+    if (!groupMemberList) return;
+    groupMemberList.innerHTML = "";
+
+    const me = auth.currentUser;
+    const candidates = users.filter((user) => user.uid && user.uid !== me?.uid);
+
+    if (!candidates.length) {
+        groupMemberList.innerHTML = `
+            <div class="member-picker-empty">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Belum ada user lain. Grup tetap dapat dibuat untuk akun Anda.</span>
+            </div>
+        `;
+        return;
+    }
+
+    candidates
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "id"))
+        .forEach((user) => {
+            const name = user.name || user.email?.split("@")[0] || "User";
+            const label = document.createElement("label");
+            label.className = "member-option";
+            label.innerHTML = `
+                <input type="checkbox" name="groupMember" value="${escapeHTML(user.uid)}">
+                <img src="${escapeHTML(avatarURL(user))}" alt="avatar">
+                <span>
+                    <strong>${escapeHTML(name)}</strong>
+                    <small>${escapeHTML(user.email || "")}</small>
+                </span>
+                <i class="fa-solid fa-check member-check"></i>
+            `;
+            groupMemberList.appendChild(label);
+        });
+}
+
+async function openCreateGroupDialog() {
+    const me = auth.currentUser;
+    if (!me) {
+        showToast("Silakan login terlebih dahulu.", "error");
+        return;
+    }
+
+    newGroupName && (newGroupName.value = "");
+    if (groupMemberList) {
+        groupMemberList.innerHTML = `<div class="member-picker-loading"><i class="fa-solid fa-spinner fa-spin"></i> Memuat user...</div>`;
+    }
+    openModal(createGroupModal);
+
+    try {
+        const snapshot = await getDocs(collection(db, "users"));
+        const users = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+        renderMemberPicker(users);
+    } catch (error) {
+        console.error("Gagal mengambil user untuk grup:", error);
+        renderMemberPicker(window.chatDirectoryUsers || []);
+        showToast("Daftar user memakai data lokal terakhir.", "error");
+    }
+}
+
+createGroupBtn?.addEventListener("click", openCreateGroupDialog);
+
+selectAllMembersBtn?.addEventListener("click", () => {
+    const boxes = Array.from(groupMemberList?.querySelectorAll('input[name="groupMember"]') || []);
+    if (!boxes.length) return;
+    const shouldSelect = boxes.some((box) => !box.checked);
+    boxes.forEach((box) => { box.checked = shouldSelect; });
+    selectAllMembersBtn.textContent = shouldSelect ? "Batalkan semua" : "Pilih semua";
+});
+
+createGroupForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const me = auth.currentUser;
+    const name = newGroupName?.value.trim() || "";
+    if (!me || !name) return;
+
+    const selected = Array.from(groupMemberList?.querySelectorAll('input[name="groupMember"]:checked') || [])
+        .map((inputElement) => inputElement.value)
+        .filter(Boolean);
+    const memberUids = Array.from(new Set([me.uid, ...selected]));
+
+    try {
+        saveGroupBtn && (saveGroupBtn.disabled = true);
+        const groupRef = await addDoc(collection(db, "groups"), {
+            name,
+            nameLower: name.toLowerCase(),
+            memberUids,
+            createdBy: me.uid,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+
+        closeModal();
+        showToast(`Grup “${name}” berhasil dibuat.`);
+        window.openChat?.({
+            kind: "group",
+            id: groupRef.id,
+            name,
+            memberUids,
+            createdBy: me.uid
+        });
+    } catch (error) {
+        console.error("Gagal membuat grup:", error);
+        showToast("Grup gagal dibuat. Periksa Firestore Rules.", "error");
+    } finally {
+        saveGroupBtn && (saveGroupBtn.disabled = false);
+    }
+});
+
+// =========================
+// PROFILE SETTINGS
+// =========================
+const COMPACT_MESSAGES_KEY = "chat-ddt-compact-messages";
+
+function applyCompactMessages(enabled) {
+    document.body.classList.toggle("compact-messages", Boolean(enabled));
+    localStorage.setItem(COMPACT_MESSAGES_KEY, enabled ? "1" : "0");
+}
+
+applyCompactMessages(localStorage.getItem(COMPACT_MESSAGES_KEY) === "1");
+
+profileSettingsBtn?.addEventListener("click", () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    if (profileDisplayName) profileDisplayName.value = user.displayName || user.email?.split("@")[0] || "";
+    if (profileEmail) profileEmail.value = user.email || "";
+    if (compactMessagesToggle) compactMessagesToggle.checked = document.body.classList.contains("compact-messages");
+    openModal(profileSettingsModal);
+});
+
+profileSettingsForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const user = auth.currentUser;
+    const name = profileDisplayName?.value.trim() || "";
+    if (!user || !name) return;
+
+    try {
+        saveProfileBtn && (saveProfileBtn.disabled = true);
+        await updateProfile(user, { displayName: name });
+        await setDoc(doc(db, "users", user.uid), { name, updatedAt: serverTimestamp() }, { merge: true });
+        applyCompactMessages(Boolean(compactMessagesToggle?.checked));
+
+        const myName = document.getElementById("myName");
+        if (myName) myName.textContent = name;
+
+        closeModal();
+        showToast("Pengaturan profil berhasil disimpan.");
+    } catch (error) {
+        console.error("Gagal menyimpan profil:", error);
+        showToast("Profil gagal disimpan.", "error");
+    } finally {
+        saveProfileBtn && (saveProfileBtn.disabled = false);
+    }
+});
+
+// =========================
+// CHAT SETTINGS
+// =========================
+function refreshChatSettings() {
+    if (settingsRoomName) settingsRoomName.textContent = currentRoom.name;
+    if (settingsRoomMembers) settingsRoomMembers.textContent = currentRoom.memberLabel;
+    if (settingsRoomId) settingsRoomId.value = currentRoom.chatId;
+}
+
+chatSettingsBtn?.addEventListener("click", () => {
+    refreshChatSettings();
+    openModal(chatSettingsModal);
+});
+
+copyRoomIdBtn?.addEventListener("click", async () => {
+    try {
+        await navigator.clipboard.writeText(currentRoom.chatId);
+        showToast("ID ruang berhasil disalin.");
+    } catch {
+        settingsRoomId?.select();
+        document.execCommand("copy");
+        showToast("ID ruang berhasil disalin.");
+    }
+});
+
+clearRoomSearchBtn?.addEventListener("click", () => {
+    clearMessageSearch();
+    closeModal();
+    showToast("Pencarian pesan dibersihkan.");
+});
+
+// =========================
+// OPEN CHAT
+// =========================
+function roomAvatar(name, background = "2563eb") {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${background}&color=ffffff`;
+}
+
+window.openChat = function (target) {
+    const me = auth.currentUser;
+    if (!me) return;
+
+    clearReply();
+    closeEmojiPicker();
+    clearMessageSearch();
+
+    if (target === "global") {
+        const userCount = Number(window.chatDirectoryUserCount || 0);
+        currentRoom = {
+            kind: "global",
+            chatId: "global",
+            name: "Global Chat",
+            memberLabel: userCount ? `${userCount} anggota terdaftar` : "Obrolan Publik",
+            photo: roomAvatar("Global Chat"),
+            memberUids: []
+        };
+    } else if (target?.kind === "group" || target?.id) {
+        const name = target.name || "Grup Chat";
+        const memberUids = Array.isArray(target.memberUids) ? target.memberUids : [];
+        currentRoom = {
+            kind: "group",
+            chatId: `group_${target.id}`,
+            id: target.id,
+            name,
+            memberLabel: `${Math.max(memberUids.length, 1)} anggota`,
+            photo: safeURL(target.photo) || roomAvatar(name, "7c3aed"),
+            memberUids,
+            createdBy: target.createdBy || ""
+        };
+    } else {
+        const otherUser = target || {};
+        const name = otherUser.name || otherUser.email?.split("@")[0] || "Private Chat";
+        const chatId = me.uid < otherUser.uid
+            ? `${me.uid}_${otherUser.uid}`
+            : `${otherUser.uid}_${me.uid}`;
+
+        currentRoom = {
+            kind: "private",
+            chatId,
+            name,
+            memberLabel: otherUser.email || "Private chat",
+            photo: avatarURL(otherUser),
+            memberUids: [me.uid, otherUser.uid].filter(Boolean)
+        };
+    }
+
+    currentChatId = currentRoom.chatId;
+    if (roomName) roomName.textContent = currentRoom.name;
+    if (roomMembers) roomMembers.textContent = currentRoom.memberLabel;
+    if (chatGroupAvatar) chatGroupAvatar.src = currentRoom.photo;
+
+    refreshChatSettings();
+    window.setActiveSidebarChat?.(currentChatId);
+    listenToChat(currentChatId);
+
+    if (isMobile()) {
+        document.getElementById("chatPage")?.classList.add("mobile-chat-open");
         if (backBtn) backBtn.style.display = "grid";
     }
 };
 
+auth.onAuthStateChanged((user) => {
+    if (user) window.openChat("global");
+});
+
 backBtn?.addEventListener("click", () => {
-    if (isMobile() && sidebar && chatArea) {
-        sidebar.style.display = "flex";
-        sidebar.style.width = "100%";
-        chatArea.style.display = "none";
-    }
+    if (!isMobile()) return;
+    document.getElementById("chatPage")?.classList.remove("mobile-chat-open");
+    if (backBtn) backBtn.style.display = "none";
 });
 
 window.addEventListener("resize", () => {
     if (!isMobile()) {
-        if (sidebar) {
-            sidebar.style.display = "flex";
-            sidebar.style.width = "360px";
-        }
-        if (chatArea) chatArea.style.display = "flex";
+        document.getElementById("chatPage")?.classList.remove("mobile-chat-open");
         if (backBtn) backBtn.style.display = "none";
-    } else if (sidebar && chatArea && chatArea.style.display !== "flex") {
-        sidebar.style.display = "flex";
-        sidebar.style.width = "100%";
-        chatArea.style.display = "none";
+        applySidebarCollapse(localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "1");
+        messageSearchWrap?.classList.remove("mobile-open");
+        toggleMessageSearchBtn?.setAttribute("aria-expanded", "false");
+    } else {
+        applySidebarCollapse(false);
     }
 });
