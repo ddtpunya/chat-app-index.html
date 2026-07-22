@@ -17,15 +17,12 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-import { auth, db } from "./firebase.js?v=20260723-image-gallery-zoom-v7";
+import { auth, db } from "./firebase.js?v=20260723-session-restore-fix-v8";
 
 // Tambahkan email lain ke daftar ini agar mereka dapat login dan muncul
 // sebagai pilihan private chat / anggota grup.
 const ALLOWED_EMAILS = [
-    "verensmb@gmail.com",
-    "anthonyan4556@gmail.com",
-    "verenlim49@gmail.com",
-    "anthonywian4@gmail.com",
+    "antho56@gmail.com"
 ];
 
 const loginBtn = document.getElementById("loginBtn");
@@ -186,6 +183,10 @@ function isEmailAllowed(email) {
 
 const authLoadingPage = document.getElementById("authLoadingPage");
 let authObserverStarted = false;
+let authInitialStateReceived = false;
+let authRestoreFallbackTimer = null;
+
+const AUTH_RESTORE_TIMEOUT_MS = 6500;
 
 function showAuthLoading() {
     if (authLoadingPage) authLoadingPage.style.display = "flex";
@@ -197,27 +198,64 @@ function hideAuthLoading() {
     if (authLoadingPage) authLoadingPage.style.display = "none";
 }
 
-async function initializeAuthentication() {
+function clearAuthRestoreFallback() {
+    if (!authRestoreFallbackTimer) return;
+    window.clearTimeout(authRestoreFallbackTimer);
+    authRestoreFallbackTimer = null;
+}
+
+function showLoginFallback() {
+    hideAuthLoading();
+    if (loginPage) loginPage.style.display = "flex";
+    if (chatPage) chatPage.style.display = "none";
+}
+
+function initializeAuthentication() {
     if (authObserverStarted) return;
     authObserverStarted = true;
     showAuthLoading();
 
-    try {
-        // Complete a pending redirect login first, when one exists.
-        await getRedirectResult(auth);
-    } catch (error) {
+    // Pasang observer lebih dahulu. Jangan menunggu getRedirectResult(), karena
+    // proses redirect dapat menggantung pada browser/hosting tertentu.
+    onAuthStateChanged(
+        auth,
+        async (user) => {
+            authInitialStateReceived = true;
+            clearAuthRestoreFallback();
+            await handleAuthStateChange(user);
+        },
+        (error) => {
+            console.error("Auth state observer error:", error);
+            authInitialStateReceived = true;
+            clearAuthRestoreFallback();
+            showLoginFallback();
+        }
+    );
+
+    // Redirect result diproses di belakang layar dan tidak boleh menahan UI.
+    void getRedirectResult(auth).catch((error) => {
         console.error("Redirect login error:", error.code, error.message);
+    });
+
+    // authStateReady juga dijalankan tanpa memblokir tampilan.
+    if (typeof auth.authStateReady === "function") {
+        void auth.authStateReady().catch((error) => {
+            console.error("Auth initialization error:", error);
+        });
     }
 
-    try {
-        // Do not decide that the user is logged out until Firebase has finished
-        // restoring the saved session from IndexedDB/localStorage.
-        await auth.authStateReady();
-    } catch (error) {
-        console.error("Auth initialization error:", error);
-    }
+    // Pengaman: layar pemulihan tidak boleh tampil selamanya.
+    authRestoreFallbackTimer = window.setTimeout(() => {
+        if (authInitialStateReceived) return;
 
-    onAuthStateChanged(auth, handleAuthStateChange);
+        console.warn("Pemulihan sesi melewati batas waktu. Menampilkan halaman login.");
+        showLoginFallback();
+
+        // Jika Firebase sudah memiliki user tetapi observer terlambat, buka chat.
+        if (auth.currentUser) {
+            void handleAuthStateChange(auth.currentUser);
+        }
+    }, AUTH_RESTORE_TIMEOUT_MS);
 }
 
 loginBtn?.addEventListener("click", async () => {

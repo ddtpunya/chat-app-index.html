@@ -10,4 +10,12 @@ Perubahan:
 - Double-click gambar untuk beralih 100% / 200%.
 - Tidak memerlukan perubahan Firestore Rules.
 
-Versi cache: 20260723-image-gallery-zoom-v7
+Versi cache: 20260723-session-restore-fix-v8
+
+
+=== SESSION RESTORE FIX v8 ===
+- Auth observer dipasang sebelum getRedirectResult.
+- getRedirectResult dan authStateReady tidak lagi memblokir UI.
+- Layar Memulihkan sesi memiliki timeout 6,5 detik.
+- LocalStorage diprioritaskan agar sesi setelah F5 lebih cepat dipulihkan.
+- Tidak memerlukan perubahan Firestore Rules atau Storage Rules.

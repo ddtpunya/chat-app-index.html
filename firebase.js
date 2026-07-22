@@ -22,11 +22,11 @@ const app = initializeApp(firebaseConfig);
 console.log("Firebase Connected");
 
 export const auth = initializeAuth(app, {
-  // Firebase will use the first storage method supported by the browser.
-  // IndexedDB is preferred, then localStorage, then sessionStorage.
+  // Prioritaskan localStorage agar pemulihan sesi setelah F5 lebih cepat
+  // dan tidak tertahan oleh IndexedDB pada browser tertentu.
   persistence: [
-    indexedDBLocalPersistence,
     browserLocalPersistence,
+    indexedDBLocalPersistence,
     browserSessionPersistence
   ],
   popupRedirectResolver: browserPopupRedirectResolver

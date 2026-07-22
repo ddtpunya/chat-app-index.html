@@ -1,4 +1,4 @@
-import { auth, db, storage } from "./firebase.js?v=20260723-image-gallery-zoom-v7";
+import { auth, db, storage } from "./firebase.js?v=20260723-session-restore-fix-v8";
 import {
     collection,
     addDoc,
